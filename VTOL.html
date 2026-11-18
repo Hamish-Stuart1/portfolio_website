@@ -1,11 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <style>
-    img {
-  float: right;
-}
-  </style>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <title>2D VTOL Hover &amp; Trajectory Control — Hamish Stuart</title>
@@ -22,8 +17,7 @@
 
   <h1>2D VTOL HOVER &amp; TRAJECTORY CONTROL</h1>
 
-  <p class="hero-sub">This project was completed as part of my univeristy degree (EGH445, modern control).  This project
-    documents an LQG controller (LQR with integral action and a Kalman filter) that holds a
+  <p class="hero-sub">This project was completed as part of my university degree (EGH445 Modern control).  This project designed an LQG controller (LQR with integral action and a Kalman filter) that holds a
     simulated Harrier style jump jet in hover and flies waypoint missions, despite wind, sensor noise
     and model error that were hidden inside a black-box simulator.</p>
 
@@ -37,40 +31,88 @@
 
 <main class="content">
 
-  <section class="proj-section">
-    <div class="section-header"><h2 class="section-title">The problem</h2></div>
+  <section class="proj-section" id="introduction">
+    <div class="section-header"><h2 class="section-title">Project introduction</h2></div>
     <div class="project-body">
-      <p><img src="vtol2.png" width="250">Typically VTOL aircraft are underactuated, meaning they
-         have two thrust inputs but three degrees of freedom (x, y and pitch). To move sideways it has to tilt, so position and attitude are coupled.
-        On top of that, only position and pitch could be measured. All three velocities had to be estimated.</p>
-      <p>The controller was tested against a black-box plant with unknown parameter error,
-        a steady crosswind and Gaussian sensor noise.</p>
-        
-        
+      <img class="img-right" src="vtol2.png" width="250" alt="Forces acting on a 2D VTOL aircraft">
+      <p>VTOL aircraft are typically underactuated, meaning two thrust inputs control three degrees of freedom
+        (x, y and pitch), so to move sideways the aircraft has to tilt first. Only position and pitch could
+        be measured, so all three velocities had to be estimated.</p>
+      <p>The controller holds the aircraft in hover and flies take-off, traverse and landing missions. It was
+        tested against a black-box simulator with hidden parameter error, a steady crosswind and Gaussian sensor noise.</p>
     </div>
   </section>
 
-  <section class="proj-section">
-    <div class="section-header"><h2 class="section-title">Approach</h2></div>
+  <section class="proj-section" id="design-choices">
+    <div class="section-header"><h2 class="section-title">Major design choices</h2></div>
     <div class="project-body">
-      <ul>
-        <li><strong>Linearisation:</strong> symbolic Jacobians of the 6-state nonlinear model about hover,
-          then zero-order-hold discretisation at 5&nbsp;ms (checked against a first-order Euler approximation,
-          max error 4.9&times;10<sup>-4</sup>).</li>
-        <li><strong>LQR state feedback:</strong> Q and R weights set with Bryson's rule from physical limits
-          (1&nbsp;m position, 0.5&nbsp;rad pitch, 15&nbsp;N thrust). Closed-loop time constants of 0.14&ndash;0.49&nbsp;s,
-          with the resulting gain naturally decoupling the vertical and lateral channels.</li>
-        <li><strong>Integral action (LQI):</strong> open-loop probing showed the crosswind caused unbounded
-          lateral drift, so the state was augmented with position-error integrators, with anti-windup near saturation.</li>
-        <li><strong>Kalman filter:</strong> a steady-state filter reconstructs the three unmeasured velocities,
-          with observer poles placed faster than the controller's. Combined with LQR via the separation principle.</li>
-        <li><strong>Reference generator:</strong> cosine-ramp trajectories (zero velocity at each end) with a
-          waypoint mode, avoiding the saturation a step reference would cause.</li>
+      <ul class="key-results">
+        <li><strong>LQR state feedback.</strong> One optimal gain handles the coupled position and pitch dynamics
+          without placing six poles by hand. Weights come from Bryson&rsquo;s rule (1&nbsp;m, 0.5&nbsp;rad, 15&nbsp;N),
+          so tuning is done in physical units.</li>
+        <li><strong>Integral action.</strong> Probing the black box showed the crosswind pushed the aircraft off
+          position indefinitely. Position-error integrators remove that drift, and anti-windup stops them winding
+          up near the &plusmn;50&nbsp;N thrust limit.</li>
+        <li><strong>Kalman filter over a Luenberger observer.</strong> Its gain comes from the model and sensor
+          noise levels instead of hand-placed poles, so it weighs the model against the noisy measurements optimally.</li>
+        <li><strong>Cosine-ramp references instead of steps.</strong> A step demands a huge acceleration at the start
+          and saturates the thrusters. A ramp starts and ends at zero velocity, at the cost of slower moves.</li>
       </ul>
     </div>
   </section>
 
-  <section class="proj-section">
+  <section class="proj-section" id="design">
+    <div class="section-header"><h2 class="section-title">Design</h2></div>
+    <div class="project-body">
+      <div class="diagram-wrap">
+        <svg class="diagram" viewBox="0 0 900 230" role="img"
+             aria-label="Control loop: the reference generator feeds the LQI controller, which drives the VTOL plant. Measured position and pitch go to a Kalman filter, which returns the full state estimate to the controller.">
+          <defs>
+            <marker id="dg-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+              <path class="dg-head" d="M0,0 L10,5 L0,10 Z"/>
+            </marker>
+          </defs>
+
+          <rect class="dg-box" x="20" y="30" width="190" height="70"/>
+          <text class="dg-title" x="36" y="60">REFERENCE</text>
+          <text class="dg-sub"   x="36" y="82">Cosine ramps, waypoints</text>
+
+          <rect class="dg-box" x="280" y="30" width="200" height="70"/>
+          <text class="dg-title" x="296" y="60">LQI CONTROLLER</text>
+          <text class="dg-sub"   x="296" y="82">LQR + position integrators</text>
+
+          <rect class="dg-box" x="560" y="30" width="320" height="70"/>
+          <text class="dg-title" x="576" y="60">VTOL PLANT</text>
+          <text class="dg-sub"   x="576" y="82">Black box: wind, noise, model error</text>
+
+          <rect class="dg-box" x="280" y="145" width="200" height="70"/>
+          <text class="dg-title" x="296" y="175">KALMAN FILTER</text>
+          <text class="dg-sub"   x="296" y="197">Estimates the 3 velocities</text>
+
+          <path class="dg-line" d="M210,65 H278" marker-end="url(#dg-arrow)"/>
+          <text class="dg-label" x="245" y="56" text-anchor="middle">x, y ref</text>
+          <path class="dg-line" d="M480,65 H558" marker-end="url(#dg-arrow)"/>
+          <text class="dg-label" x="519" y="56" text-anchor="middle">u1, u2</text>
+          <path class="dg-line" d="M720,100 V180 H482" marker-end="url(#dg-arrow)"/>
+          <text class="dg-label" x="600" y="172" text-anchor="middle">measured x, y, &#952;</text>
+          <path class="dg-line" d="M380,145 V102" marker-end="url(#dg-arrow)"/>
+          <text class="dg-label" x="388" y="128">full state estimate</text>
+        </svg>
+      </div>
+
+      <ul>
+        <li><strong>Model:</strong> symbolic Jacobians of the 6-state nonlinear model about hover, discretised with
+          a zero-order hold at 5&nbsp;ms. A first-order Euler check differed by at most 4.9&times;10<sup>-4</sup>.</li>
+        <li><strong>Decoupled gain:</strong> the LQR gain came out naturally split, with horizontal thrust acting on
+          x and pitch and vertical thrust acting only on y. Closed-loop time constants are 0.14&ndash;0.49&nbsp;s.</li>
+        <li><strong>Observer speed:</strong> the Kalman filter is faster than the controller, so estimates settle
+          before the controller relies on them. The separation principle guarantees the combined loop is stable.</li>
+        <li><strong>Waypoint mode:</strong> chains ramps together into take-off, traverse and landing missions.</li>
+      </ul>
+    </div>
+  </section>
+
+  <section class="proj-section" id="results">
     <div class="section-header"><h2 class="section-title">Results</h2></div>
     <div class="project-body">
       <ul class="key-results">
@@ -79,36 +121,37 @@
         <li><strong>No actuator saturation</strong> in hover or during the waypoint mission.</li>
         <li><strong>Fast estimation:</strong> the Kalman filter converged on position within 3&nbsp;s and on velocities within 4&nbsp;s.</li>
       </ul>
-<br>
-      <figure>
-        <img src="vtol-waypoint-path.png" width="250"/>
-        <figcaption>Take-off, traverse and landing mission. The arcs between waypoints come from the
-          aircraft having to tilt to accelerate sideways, not from a tracking failure.</figcaption>
-      </figure>
-<br>
-      <div class="fig-pair">
-        <figure>
-          <img src="vtol-hover-error.png" width="250"/>
-          <figcaption>Hover in crosswind: errors stay bounded over 60&nbsp;s.</figcaption>
-        </figure>
-        <br>
-        <figure>
-          <img src="vtol-observer.png" width="250"/>
-          <figcaption>Observer test: estimates converge from a 1&nbsp;m step.</figcaption>
-        </figure>
-      </div>
-    </div>
+
+      <div class="fig-row">
+  <figure>
+    <img src="vtol-waypoint-path.png" width="250" alt="2D flight path of a waypoint mission, closely following the planned path"/>
+    <figcaption>Waypoint mission. The arcs come from the aircraft having to tilt to accelerate sideways, not from a tracking failure.</figcaption>
+  </figure>
+  <figure>
+    <img src="vtol-hover-error.png" width="250" alt="Position error and pitch angle over 60 seconds of hover, all bounded"/>
+    <figcaption>Hover in crosswind: errors stay bounded over 60&nbsp;s.</figcaption>
+  </figure>
+  <figure>
+    <img src="vtol-observer.png" width="200" alt="Kalman filter estimates converging after a 1 m step"/>
+    <figcaption>Observer test: estimates converge from a 1&nbsp;m step.</figcaption>
+  </figure>
+</div>
   </section>
-<br>
-  <section class="proj-section">
-    <div class="section-header"><h2 class="section-title">What I learned</h2></div>
-    <div class="project-body">
-      <p>The biggest lesson was how much the plant's physics shapes what &ldquo;good tracking&rdquo; looks like:
-        an underactuated aircraft can't fly a straight diagonal, so judging the controller meant understanding
-        the dynamics, not just the error plots. Probing the black box before designing (instead of assuming
-        ideal conditions) is what revealed the need for integral action.</p>
-      <p>Next steps would be a path-planning layer that generates attitude-aware trajectories, automated
-        LQR tuning, and a comparison against nonlinear MPC.</p>
+
+  <section class="proj-section" id="future-developments">
+    <div class="section-header"><h2 class="section-title">Future developments</h2></div>
+    <div class="project-body">While most of these points were outside the scope of the projects criteria, given unlimited design authority (and maybe a few more weeks to submit the assesment), if i were to do the project again i would investigate these points;
+      <ul class="key-results">
+        
+        <li><strong>Path-planning layer.</strong> Generating trajectories with attitude references built in would
+          keep diagonal moves straight instead of arcing. In the report I blamed these arcs on the simulated wind, however its possible they are rather caused by other factors.</li>
+        <li><strong>Wider disturbance testing.</strong> During the assignment, colaborating with classmates (while remaining within all accademic misconduct rules) it was
+        discovered that student number was used as a seed for wind strength, meaning some studnets had a significantly higher ammount of disturbance than others.  For further testing, this seed shouldve been investigated, to guage if the model can adapt to conditions.</li>
+        <li><strong>Automated LQR tuning.</strong> A script sweeping Q and R to find the best tune. Useful, but the
+          current tune already meets every requirement, so it is a refinement.</li>
+        <li><strong>Nonlinear MPC.</strong> Would handle the full dynamics and thrust limits directly and allow
+          aggressive manoeuvres. Not necessary for hover and gentle missions, and far heavier to compute.</li>
+      </ul>
     </div>
   </section>
 
