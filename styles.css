@@ -34,13 +34,36 @@
   --scroll-track:    #111;
   --scroll-thumb:    #444;
 
-  /* robot arm thumbnail (SVG) */
+  /* robot arm demo (robotarm.html) */
+  --ok:              #59ff4a;   /* "OK" status badges                   */
+  --warn:            #f5844c;   /* warning badges + log warnings        */
+  --log-text:        #59ff4a;   /* demo console text                    */
+  --btn-reset:       orange;
+  --btn-stop:        red;
+
+  /* code block syntax colours */
+  --code-keyword:    #e4ab56;
+  --code-function:   #527cd6;
+  --code-comment:    #49c2e7;
+  --code-number:     #e66464;
+  --code-string:     #c655d4;
+
+  /* robot arm drawings (SVG) */
   --svg-grid:        #59ff4a;
   --arm-1:           red;
   --arm-2:           green;
   --arm-3:           blue;
   --arm-tool:        orange;
   --arm-cargo:       yellow;
+
+  /* airfoil generator (naca-airfoil.html) */
+  --plot-surface:    #fff;      /* airfoil outline                      */
+  --plot-camber:     #888;      /* dashed mean camber line              */
+  --plot-points:     #44c538;   /* point markers                        */
+  --plot-grid:       #1c1c1c;   /* plot grid lines                      */
+  --plot-chord:      #444;      /* chord line + tick labels             */
+  --input-bg:        #000;      /* text and number boxes                */
+  --error:           #f5844c;   /* input error messages                 */
 
   /* fonts */
   --font: 'Inter', system-ui, -apple-system, sans-serif;
@@ -56,6 +79,7 @@ body {
   background: var(--bg); color: var(--text);
   font-family: var(--font); font-size: 15px; line-height: 1.6;
 }
+sup { line-height: 0; }
 a:focus-visible, button:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
 
 /* ── header ── */
@@ -81,7 +105,7 @@ nav { display: flex; gap: 28px; }
   font-weight: 700; letter-spacing: -.03em; line-height: 1.05;
   color: var(--heading); margin-bottom: 20px;
 }
-.hero-sub { font-size: 16px; color: var(--heading); max-width: 200ch; line-height: 1.65; }
+.hero-sub { font-size: 16px; color: var(--heading); max-width: 75ch; line-height: 1.65; }
 
 /* ── main content ── */
 .content { max-width: 1100px; margin: 0 auto; padding: 0 40px 80px; }
@@ -190,6 +214,7 @@ nav { display: flex; gap: 28px; }
 .arm-3 { stroke: var(--arm-3); fill: var(--arm-3); }
 .arm-tool  { stroke: var(--arm-tool); fill: var(--arm-tool); }
 .arm-cargo { fill: var(--arm-cargo); }
+svg text[class] { stroke: none; }   /* keeps coloured SVG labels crisp */
 
 /* =====================================================================
    PROJECT PAGE (project.html)
@@ -207,8 +232,10 @@ nav { display: flex; gap: 28px; }
 }
 .project-meta strong { color: var(--heading); font-weight: 600; margin-right: 6px; }
 
-.project-body { max-width: 100ch; }
+.project-body { display: flow-root; }   /* full width so images can reach the line's right end;
+                                           flow-root keeps floated images inside their section */
 .project-body p, .project-body ul { margin-bottom: 16px; }
+.project-body > p, .project-body > ul { max-width: 75ch; }   /* keeps text lines readable */
 .project-body ul { padding-left: 20px; }
 .project-body a { color: var(--accent); }
 
@@ -224,7 +251,11 @@ nav { display: flex; gap: 28px; }
     45deg, var(--placeholder-line) 0 1px, transparent 1px 12px);
 }
 .media-placeholder span { position: relative; }
-.project-body img { display: block; max-width: 100%; border: 1px solid var(--border); margin: 8px 0 24px; }
+.project-body img { display: block; max-width: 100%; height: auto; border: 1px solid var(--border); margin: 8px 0 24px; }
+
+/* Image that sits on the right with text wrapping around it.
+   Set its size with the width attribute, e.g. <img class="img-right" src="..." width="250"> */
+.project-body .img-right { float: right; margin: 0 0 16px 24px; }
 
 /* ── footer ── */
 footer {
@@ -250,4 +281,228 @@ footer {
 @media (prefers-reduced-motion: reduce) {
   html, .proj-row { scroll-behavior: auto; }
   .proj-card { transition: none; }
+}
+
+/* =====================================================================
+   PROJECT PAGE EXTRAS — figures, key results, download link
+   ===================================================================== */
+/* Figure (image + caption) right-aligned to the line's end.
+   Set its size with the width attribute on the img inside it. */
+.project-body figure { width: fit-content; max-width: 100%; margin: 8px 0 28px auto; }
+.project-body figcaption { contain: inline-size; }   /* caption wraps to the image width */
+.project-body figure img { margin: 0; background: #fff; }
+.project-body figcaption {
+  margin-top: 8px; font-size: 13px; color: var(--muted);
+}
+.fig-pair { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; clear: both; }
+.fig-pair figure { width: auto; margin-left: 0; }
+@media (max-width: 700px) { .fig-pair { grid-template-columns: 1fr; } }
+@media (max-width: 480px) {   /* phones: stop wrapping text, image sits on its own line */
+  .project-body .img-right { float: none; margin: 0 0 16px auto; }
+}
+
+.key-results { list-style: none; padding: 0 !important; border-top: 1px solid var(--footer-border); display: flow-root; }  /* flow-root: sits beside a floated image instead of under it */
+.key-results li {
+  padding: 10px 0; border-bottom: 1px solid var(--footer-border);
+}
+.key-results strong { color: var(--heading); }
+
+.download-link {
+  display: inline-block; margin-top: 28px; padding: 8px 16px;
+  border: 1px solid var(--border); color: var(--heading); text-decoration: none;
+  font-family: var(--mono); font-size: 12px; letter-spacing: .06em;
+  transition: border-color .15s, color .15s;
+}
+.download-link:hover { border-color: var(--accent); color: var(--accent); }
+
+/* =====================================================================
+   ROBOT ARM DEMO + TECHNICAL BLOCKS (robotarm.html)
+   ===================================================================== */
+.demo-shell { border: 1px solid var(--border); margin-top: 8px; }
+.demo-body { display: grid; grid-template-columns: 250px 1fr; min-height: 480px; }
+.ctrl-panel {
+  border-right: 1px solid var(--border); padding: 16px;
+  display: flex; flex-direction: column; gap: 18px;
+}
+.cp-label {
+  font-family: var(--mono); font-size: 10px; font-weight: 600; margin-bottom: 8px;
+  letter-spacing: .12em; text-transform: uppercase; color: var(--heading);
+}
+.joints { display: flex; flex-direction: column; gap: 10px; }
+.joint-row { display: flex; flex-direction: column; gap: 5px; }
+.jh { display: flex; justify-content: space-between; font-size: 12px; }
+.jname { color: var(--heading); }
+.jval, .plat-slider-mm { font-family: var(--mono); font-size: 11px; color: var(--text); }
+
+.demo-shell input[type=range] {
+  width: 100%; height: 4px; cursor: pointer;
+  -webkit-appearance: none; appearance: none; background: var(--footer-border);
+}
+.demo-shell input[type=range]::-webkit-slider-thumb {
+  -webkit-appearance: none; width: 14px; height: 14px; border-radius: 50%; background: var(--accent);
+}
+.demo-shell input[type=range]::-moz-range-thumb {
+  width: 14px; height: 14px; border: none; border-radius: 50%; background: var(--accent);
+}
+
+.stat-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+.stat-box { border: 1px solid var(--footer-border); padding: 6px 8px; }
+.stat-box .sl { font-family: var(--mono); font-size: 9px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); }
+.stat-box .sv { font-family: var(--mono); font-size: 14px; font-weight: 600; color: var(--heading); }
+
+.plat-list { display: flex; flex-direction: column; gap: 7px; }
+.plat-slider-row { display: flex; align-items: center; gap: 8px; }
+.plat-slider-row input { flex: 1; }
+.plat-slider-label { font-family: var(--mono); font-size: 11px; font-weight: 600; min-width: 12px; }
+.plat-slider-label.pA { color: var(--arm-1); }
+.plat-slider-label.pB { color: var(--arm-2); }
+.plat-slider-label.pC { color: var(--arm-3); }
+.plat-slider-mm { min-width: 40px; text-align: right; }
+
+.pp-row { display: flex; gap: 8px; align-items: center; margin-bottom: 6px; }
+.pp-label { font-size: 11px; min-width: 32px; }
+.demo-shell select {
+  flex: 1; padding: 6px 8px; font: inherit; font-size: 12px; cursor: pointer;
+  background: var(--bg); color: var(--heading); border: 1px solid var(--border);
+}
+.demo-shell select:focus { border-color: var(--accent); outline: none; }
+
+.fw-row { display: flex; flex-direction: column; gap: 6px; }
+.fw-item { display: flex; justify-content: space-between; font-size: 11px; }
+.badge { font-family: var(--mono); font-size: 10px; }
+.badge.ok { color: var(--ok); }
+.badge.warn { color: var(--warn); }
+
+.btn-row { display: flex; gap: 8px; }
+.demo-shell button {
+  flex: 1; width: 100%; padding: 8px 10px; cursor: pointer;
+  font-family: var(--mono); font-size: 11px; letter-spacing: .08em;
+  background: transparent; color: var(--heading); border: 1px solid var(--border);
+  transition: border-color .15s, color .15s, opacity .15s;
+}
+.demo-shell button:disabled { opacity: .4; cursor: not-allowed; }
+.demo-shell button.primary { margin-top: 4px; background: var(--accent); color: var(--bg); border-color: var(--accent); font-weight: 600; }
+.demo-shell button.primary:hover:not(:disabled) { opacity: .85; }
+.demo-shell button.home   { border-color: var(--btn-reset); color: var(--btn-reset); }
+.demo-shell button.danger { border-color: var(--btn-stop);  color: var(--btn-stop); }
+
+.right-pane { display: flex; flex-direction: column; min-width: 0; }
+.viz-area { flex: 1; }
+svg#arm { display: block; width: 100%; height: 100%; min-height: 300px; }
+.log-area {
+  height: 110px; overflow-y: auto; padding: 8px 14px;
+  border-top: 1px solid var(--border);
+  font-family: var(--mono); font-size: 11px; color: var(--log-text);
+}
+.log-area p { margin: 0; line-height: 1.8; white-space: pre; }
+.log-area p.warn { color: var(--warn); }
+
+@media (max-width: 700px) {
+  .demo-body { grid-template-columns: 1fr; }
+  .ctrl-panel { border-right: none; border-bottom: 1px solid var(--border); }
+}
+
+/* architecture cards */
+.arch-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px; margin-top: 8px; }
+.arch-card { border: 1px solid var(--border); padding: 20px; }
+.arch-card h3 {
+  font-family: var(--mono); font-size: 11px; font-weight: 600; margin-bottom: 12px;
+  letter-spacing: .1em; text-transform: uppercase; color: var(--heading);
+}
+.arch-card ul { list-style: none; display: flex; flex-direction: column; gap: 6px; }
+.arch-card li { font-size: 13px; padding-left: 14px; position: relative; }
+.arch-card li::before { content: '–'; position: absolute; left: 0; color: var(--accent); }
+
+/* code blocks */
+.code-block { border: 1px solid var(--border); padding: 16px 20px; overflow-x: auto; margin: 8px 0 24px; }
+.code-block pre { font-family: var(--mono); font-size: 12px; line-height: 1.75; color: var(--heading); }
+.kw  { color: var(--code-keyword); }
+.fn  { color: var(--code-function); }
+.cm  { color: var(--code-comment); }
+.nu  { color: var(--code-number); }
+.str { color: var(--code-string); }
+
+/* data tables */
+.table-wrap { overflow-x: auto; }
+.data-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.data-table th {
+  text-align: left; padding: 8px 12px; border-bottom: 1px solid var(--divider);
+  font-family: var(--mono); font-size: 10px; font-weight: 600;
+  letter-spacing: .08em; text-transform: uppercase; color: var(--heading);
+}
+.data-table td { padding: 10px 12px; border-bottom: 1px solid var(--footer-border); font-family: var(--mono); white-space: nowrap; }
+.data-table td:first-child { font-family: var(--font); font-weight: 500; color: var(--heading); }
+
+/* =====================================================================
+   BLOCK DIAGRAMS (inline SVG on project pages)
+   ===================================================================== */
+.diagram-wrap { overflow-x: auto; margin: 8px 0 28px; }
+.diagram { display: block; width: 100%; min-width: 680px; height: auto; }
+.dg-box   { fill: none; stroke: var(--border); stroke-width: 1; }
+.dg-group { fill: none; stroke: var(--footer-border); stroke-dasharray: 4 4; }
+.dg-rule  { stroke: var(--footer-border); }
+.dg-line  { fill: none; stroke: var(--accent); stroke-width: 1.5; }
+.dg-head  { fill: var(--accent); }
+.dg-title { fill: var(--heading); font-family: var(--mono); font-size: 13px; font-weight: 600; letter-spacing: .06em; }
+.dg-sub   { fill: var(--text); font-family: var(--font); font-size: 12px; }
+.dg-label { fill: var(--muted); font-family: var(--mono); font-size: 11px; }
+
+/* =====================================================================
+   AIRFOIL GENERATOR + EQUATIONS (naca-airfoil.html)
+   ===================================================================== */
+.gen .demo-body { min-height: 0; }
+.field { display: flex; flex-direction: column; gap: 5px; margin-bottom: 12px; }
+.field:last-child { margin-bottom: 0; }
+.field label, .check { font-size: 12px; color: var(--heading); }
+.field .hint { color: var(--muted); }
+.field-row { display: flex; justify-content: space-between; align-items: baseline; }
+.demo-shell input[type=text], .demo-shell input[type=number] {
+  width: 100%; padding: 6px 8px;
+  background: var(--input-bg); color: var(--heading); border: 1px solid var(--border);
+  font-family: var(--mono); font-size: 13px;
+}
+.demo-shell input[type=text]:focus, .demo-shell input[type=number]:focus { border-color: var(--accent); outline: none; }
+.demo-shell input.code-input { font-size: 22px; font-weight: 600; letter-spacing: .25em; padding: 6px 10px; }
+.demo-shell input[aria-invalid=true] { border-color: var(--error); }
+.preset-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
+.demo-shell .preset-row button { padding: 6px 0; }
+.check { display: flex; align-items: center; gap: 8px; margin-top: 6px; cursor: pointer; }
+.check input { accent-color: var(--accent); }
+.export-btns { display: flex; flex-direction: column; gap: 8px; }
+.gen-error { min-height: 1.2em; font-size: 12px; color: var(--error); }
+
+.plot-area { flex: 1; display: flex; align-items: center; padding: 16px 16px 4px; }
+.plot-area svg { display: block; width: 100%; height: auto; }
+.af-surface { fill: none; stroke: var(--plot-surface); stroke-width: 1.5px; stroke-linejoin: round; }
+.af-camber  { fill: none; stroke: var(--plot-camber); stroke-width: 1px; stroke-dasharray: 5 4; }
+.af-point   { fill: var(--plot-points); }
+.af-grid    { stroke: var(--plot-grid); stroke-width: 1px; }
+.af-chord   { stroke: var(--plot-chord); stroke-width: 1px; }
+.af-tick    { fill: var(--plot-chord); font-family: var(--mono); }
+.plot-legend {
+  display: flex; flex-wrap: wrap; gap: 6px 18px; padding: 0 16px 12px;
+  font-family: var(--mono); font-size: 10px; color: var(--muted);
+}
+.plot-legend i { display: inline-block; width: 16px; height: 0; margin-right: 6px; vertical-align: middle; border-top: 1.5px solid var(--plot-surface); }
+.plot-legend i.dash { border-top: 1px dashed var(--plot-camber); }
+.plot-legend i.dot { width: 6px; height: 6px; border: none; border-radius: 50%; background: var(--plot-points); }
+.readouts { border-top: 1px solid var(--border); padding: 12px 16px 16px; }
+
+/* equations */
+.eq-block { border: 1px solid var(--border); margin: 8px 0 24px; }
+.eq-row {
+  display: grid; grid-template-columns: 170px minmax(0, 1fr); gap: 16px; align-items: center;
+  padding: 12px 20px; border-bottom: 1px solid var(--footer-border);
+}
+.eq-row:last-child { border-bottom: none; }
+.eq-name { font-family: var(--mono); font-size: 11px; color: var(--heading); }
+.eq-math { overflow-x: auto; overflow-y: hidden; color: var(--heading); }
+.eq-math .katex-display { margin: 4px 0; text-align: left; }
+.eq-math .katex-display > .katex { text-align: left; }
+
+@media (max-width: 700px) {
+  .gen .right-pane { order: -1; border-bottom: 1px solid var(--border); }
+  .gen .ctrl-panel { border-bottom: none; }
+  .eq-row { grid-template-columns: 1fr; gap: 4px; padding: 12px 14px; }
+  .eq-math .katex { font-size: 1em; }
 }
