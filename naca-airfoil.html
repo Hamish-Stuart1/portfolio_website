@@ -22,8 +22,12 @@
 
   <h1>NACA 4-DIGIT AIRFOIL GENERATOR</h1>
 
-  <p class="hero-sub">Turns a four-digit NACA code into wing-section coordinates, ready for analysis software
-    or for cutting wing ribs. Written in MATLAB, rebuilt here so it runs in your browser.</p>
+  <p class="hero-sub">I completed this project as a helper for my future plans of RC aircraft and UAV development,
+    when desiging airframes in CAD I found airfoils extremely difficult to create.  Through online research i came across a Fusion360 extension
+    that converted .dat files to Fusion360 splines, which gives a very accurate airfoil sketch.  This project aimed to provide a simple way
+    to generate a miriad of NACA airfoils for this extension to use.  Since this project was completed Fusion360 was updated and the extension no longer
+  works, the creator of this extension has noted in forums that he does not intend on updating the extension as he now uses other software.  As such, I developed the MATLAB code into a browser demonstrator, in hopes to find a more equipt software engineer interested in updating the extension to produce an extremely simple way for model makers to go straight from NACA code selection to accurate airfoil model.
+</p>
 
   <!-- EDIT: add Type and Date like the other project pages -->
   <div class="project-meta">
@@ -40,10 +44,12 @@
   <section class="proj-section" id="introduction">
     <div class="section-header"><h2 class="section-title">Project introduction</h2></div>
     <div class="project-body">
-      <p>A NACA 4-digit code describes a wing cross-section in four numbers: how much the section is curved
-        (camber), where that curve peaks, and how thick it is. This tool turns the code into surface coordinates,
+      <p>The NACA 4 digit code is a classic aerospace engineering method of describing a wings cross-section in 
+        four numbers: how much the section is curved
+        (camber), where that curve peaks, and how thick it is. 
+        This tool turns the code into surface coordinates,
         plots the section, and exports a point file that XFOIL, XFLR5 or CAD software can open.</p>
-      <p>Try it: type a code or pick an example, and the plot updates as you go.</p>
+      <p>The following demonstrator contains all of this functionality, including 4 preset common airfoils</p>
 
       <div class="demo-shell gen">
         <div class="demo-body">
@@ -132,20 +138,16 @@
     <div class="project-body">
       <ul class="key-results">
         <li><strong>Cosine point spacing.</strong> Points sit at \(x = 1 - \cos\varphi\) instead of evenly along the
-          chord. The nose has the tightest curvature and matters most to analysis codes, so points cluster there; the
-          nearly straight rear needs fewer. Evenly spaced, 41 points leave the nose of a 12&nbsp;% section visibly faceted.</li>
-        <li><strong>Thickness applied perpendicular to the camber line.</strong> This is the true NACA definition.
-          Adding thickness straight up and down is simpler but shifts the nose and changes its radius on cambered sections.</li>
-        <li><strong>Open or closed trailing edge.</strong> The original equation leaves a small gap at the tail (0.25&nbsp;%
-          of chord for a 12&nbsp;% section), which matches published NACA data. One coefficient change closes it with the
-          smallest change to the shape, which CAD lofts and meshing tools need.</li>
-        <li><strong>Two export formats.</strong> The .dat file is normalised to unit chord in the order XFOIL and XFLR5
-          expect (tail &rarr; upper surface &rarr; nose &rarr; lower surface &rarr; tail). The .csv is scaled to the chosen
-          chord length for CAD.</li>
+          chord. The nose of the airfoil has the tightest curvature and matters most to analysis codes, meaning points clustered at this point is invaluable.
+        </li>
+        <li><strong>Thickness applied perpendicular to the camber line.</strong> This is set according to the true definition.
+          Adding thickness straight up and down shifts the nose and changes its radius on cambered sections.</li>
+        <li><strong>Open or closed trailing edge.</strong> The original equation leaves a small gap at the tail, 
+          which matches published NACA data. A coefficient change closes this gap as is often required from CAD softwares and mesh tools.</li>
+        <li><strong>Export formats.</strong> The .dat file is normalised to unit chord in the order XFOIL and XFLR5
+          expect. The .csv is scaled to the chosen chord length for CAD.</li>
         <li><strong>Left out: other NACA series.</strong> The 5-digit and 6-series families depend on tabulated constants.
           The 4-digit family covers most model aircraft, small drone and teaching use, so it was the best return for the effort.</li>
-        <li><strong>Left out: aerodynamic analysis.</strong> XFOIL and XFLR5 are free and well validated. Writing a solver
-          would add risk without adding accuracy, so the tool focuses on clean geometry for them.</li>
       </ul>
     </div>
   </section>
@@ -188,15 +190,6 @@
           <div class="eq-math">\[ (X,\ Y) = c\,(x,\ y) \]</div>
         </div>
       </div>
-
-      <ul>
-        <li><strong>Symmetric sections skip the camber step.</strong> When the first digit is 0 the camber line is
-          zero everywhere, which also avoids dividing by \(p = 0\).</li>
-        <li><strong>The code is read as text,</strong> so 0012 keeps its leading zeros. Codes that can't exist, such
-          as 2012 (camber with no position for it), are rejected with a clear message.</li>
-        <li><strong>The nose point is written once.</strong> Both surfaces start at the same leading-edge point, so the
-          export skips the duplicate that would otherwise create a zero-length panel in XFOIL.</li>
-      </ul>
     </div>
   </section>
 
@@ -204,21 +197,13 @@
   <section class="proj-section" id="results">
     <div class="section-header"><h2 class="section-title">Results</h2></div>
     <div class="project-body">
-      <p>Each output was checked against the property the code is meant to describe:</p>
       <ul class="key-results">
         <li><strong>NACA 0012:</strong> maximum thickness of 12.00&nbsp;% of chord, at 30&nbsp;% chord.</li>
         <li><strong>NACA 2412:</strong> camber line peaks at 2.00&nbsp;% of chord at 40&nbsp;% chord, with the slope
           continuous where the two camber equations meet.</li>
         <li><strong>Trailing edge:</strong> the closed option ends at exactly zero thickness (to 10<sup>&minus;16</sup>);
           the open option leaves the expected 0.25&nbsp;% gap on a 12&nbsp;% section.</li>
-        <li><strong>Browser and MATLAB agree</strong> to within 5&times;10<sup>&minus;7</sup> of chord for 0012, 2412 and
-          4415, the rounding limit of the exported files.</li>
       </ul>
-      <p>These checks also caught bugs in the first MATLAB version: the camber line used its front equation along the
-        whole chord, the slope equation used thickness where it should have used \(x\), the upper surface took the
-        cosine of \(x\) instead of \(\theta\), and the export copied the upper surface&rsquo;s heights onto the lower
-        surface. Reading the code as a number also turned 0012 into 12. Together these put a 2412&rsquo;s upper surface
-        up to 2.5&nbsp;% of chord out. All are fixed in both versions.</p>
     </div>
   </section>
 
@@ -228,13 +213,12 @@
     <div class="project-body">
       <ul class="key-results">
         <li><strong>Full-cosine spacing option.</strong> Spacing points with \(x = \tfrac{1}{2}(1 - \cos\beta)\) clusters
-          them at the tail as well as the nose. Worth adding: a one-line change that improves trailing-edge detail for CFD meshes.</li>
-        <li><strong>Rib export for laser cutting.</strong> An SVG or DXF outline at true scale, with spar slots, would
-          take a model builder straight from code to cut parts. Worth adding: it removes the CAD step for the main audience.</li>
-        <li><strong>5-digit series.</strong> Adds reflexed sections suited to flying wings. Useful, but it needs the
-          tabulated camber constants, so it is a bigger job than the other two.</li>
-        <li><strong>Built-in lift and drag.</strong> Not necessary: XFOIL and XFLR5 already do this well and read the
-          exported file directly.</li>
+          points at both the tail and the nose, resulting in a more accurate model.</li>
+        <li><strong>Rib export.</strong> An SVG or DXF outline at true scale, including spar slots, would
+          mean a direct path from code to manufacturing ready models.</li>
+        <li><strong>5-digit series.</strong>  NACA also has a 5 digit series of airfoils that include reflexed sections, 
+          this requires tabluated camber constants.  This complicates the process a lot and will likely require entirely reworking the project.</li>
+
       </ul>
     </div>
   </section>
