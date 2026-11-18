@@ -14,21 +14,16 @@
 <body>
 
 <header>
-  <a class="logo" href="main.html">Professional portfolio</a>
-  <nav>
-    <a href="main.html#completed">Completed</a>
-    <a href="main.html#wip">In Progress</a>
-    <a href="main.html#future">Future</a>
-  </nav>
+  <a class="logo" href="index.html">Professional portfolio</a>
 </header>
 
 <div class="hero">
-  <a class="back-link" href="main.html">&larr; Back to portfolio</a>
+  <a class="back-link" href="index.html">&larr; Back to portfolio</a>
 
   <h1>2D VTOL HOVER &amp; TRAJECTORY CONTROL</h1>
 
   <p class="hero-sub">An LQG controller (LQR with integral action and a Kalman filter) that holds a
-    simulated Harrier-style jump jet in hover and flies waypoint missions, despite wind, sensor noise
+    simulated Harrier style jump jet in hover and flies waypoint missions, despite wind, sensor noise
     and model error that were hidden inside a black-box simulator.</p>
 
   <div class="project-meta">
@@ -44,8 +39,8 @@
   <section class="proj-section">
     <div class="section-header"><h2 class="section-title">The problem</h2></div>
     <div class="project-body">
-      <p><img src="vtol2.png" width="250">A VTOL aircraft is underactuated: it has two thrust inputs but three degrees of freedom
-        (x, y and pitch). To move sideways it has to tilt, so position and attitude are tightly coupled.
+      <p><img src="vtol2.png" width="250">Typically VTOL aircraft are underactuated, meaning they
+         have two thrust inputs but three degrees of freedom (x, y and pitch). To move sideways it has to tilt, so position and attitude are coupled.
         On top of that, only position and pitch could be measured. All three velocities had to be estimated.</p>
       <p>The controller was tested against a black-box plant with unknown parameter error,
         a steady crosswind and Gaussian sensor noise.</p>
