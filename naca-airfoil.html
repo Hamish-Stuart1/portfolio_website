@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>NACA 4-Digit Airfoil Generator — Hamish Stuart</title>
+<link rel="stylesheet" href="styles.css"/>
+<!-- KaTeX renders the equations in the Design section -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.css"/>
+<script defer src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.js"></script>
+<script defer src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/contrib/auto-render.min.js"
+  onload="renderMathInElement(document.body, {delimiters: [{left: '\\[', right: '\\]', display: true}, {left: '\\(', right: '\\)', display: false}]});"></script>
+</head>
+<body>
+
+<header>
+  <a class="logo" href="main.html">Professional portfolio</a>
+  <nav>
+    <a href="main.html#completed">Completed</a>
+    <a href="main.html#wip">In Progress</a>
+    <a href="main.html#future">Future</a>
+  </nav>
+</header>
+
+<div class="hero">
+  <a class="back-link" href="main.html">&larr; Back to portfolio</a>
+
+  <h1>NACA 4-DIGIT AIRFOIL GENERATOR</h1>
+
+  <p class="hero-sub">Turns a four-digit NACA code into wing-section coordinates, ready for analysis software
+    or for cutting wing ribs. Written in MATLAB, rebuilt here so it runs in your browser.</p>
+
+  <!-- EDIT: add Type and Date like the other project pages -->
+  <div class="project-meta">
+    <span><strong>Status</strong>Completed</span>
+    <span><strong>Tools</strong>MATLAB, JavaScript</span>
+  </div>
+
+  <a class="download-link" href="files/naca4.m" download>Download the MATLAB script</a>
+</div>
+
+<main class="content">
+
+  <!-- ═════════ PROJECT INTRODUCTION ═════════ -->
+  <section class="proj-section" id="introduction">
+    <div class="section-header"><h2 class="section-title">Project introduction</h2></div>
+    <div class="project-body">
+      <p>A NACA 4-digit code describes a wing cross-section in four numbers: how much the section is curved
+        (camber), where that curve peaks, and how thick it is. This tool turns the code into surface coordinates,
+        plots the section, and exports a point file that XFOIL, XFLR5 or CAD software can open.</p>
+      <p>Try it: type a code or pick an example, and the plot updates as you go.</p>
+
+      <div class="demo-shell gen">
+        <div class="demo-body">
+
+          <div class="ctrl-panel">
+            <div>
+              <div class="cp-label">Airfoil</div>
+              <div class="field">
+                <label for="code">NACA code</label>
+                <input class="code-input" id="code" type="text" value="2412" maxlength="4"
+                       inputmode="numeric" autocomplete="off" spellcheck="false" aria-describedby="gen-error"/>
+              </div>
+              <div class="preset-row" aria-label="Example codes">
+                <button type="button" data-code="0012">0012</button>
+                <button type="button" data-code="2412">2412</button>
+                <button type="button" data-code="4415">4415</button>
+                <button type="button" data-code="6409">6409</button>
+              </div>
+            </div>
+
+            <div>
+              <div class="cp-label">Settings</div>
+              <div class="field">
+                <div class="field-row">
+                  <label for="pts">Points per surface</label>
+                  <span class="jval" id="pts-val">41</span>
+                </div>
+                <input id="pts" type="range" min="10" max="200" step="1" value="41"/>
+              </div>
+              <div class="field">
+                <label for="chord">Chord length <span class="hint">(.csv export)</span></label>
+                <input id="chord" type="number" min="0.001" step="any" value="100"/>
+              </div>
+              <div class="field">
+                <label for="te">Trailing edge</label>
+                <select id="te">
+                  <option value="open">Open (original NACA)</option>
+                  <option value="closed">Closed (for CAD)</option>
+                </select>
+              </div>
+              <label class="check"><input id="show-pts" type="checkbox" checked/> Show points</label>
+              <label class="check"><input id="show-camber" type="checkbox" checked/> Show camber line</label>
+            </div>
+
+            <div>
+              <div class="cp-label">Export</div>
+              <div class="export-btns">
+                <button type="button" id="dl-dat">Download .dat (XFOIL)</button>
+                <button type="button" id="dl-csv">Download .csv (CAD)</button>
+              </div>
+            </div>
+
+            <div class="gen-error" id="gen-error" role="alert"></div>
+          </div>
+
+          <div class="right-pane">
+            <div class="plot-area">
+              <svg id="plot" role="img" aria-label="Plot of the airfoil section"></svg>
+            </div>
+            <div class="plot-legend" aria-hidden="true">
+              <span><i></i>surface</span>
+              <span><i class="dash"></i>camber line</span>
+              <span><i class="dot"></i>points</span>
+              <span>x/c = position along chord</span>
+            </div>
+            <div class="readouts">
+              <div class="stat-grid">
+                <div class="stat-box"><div class="sl">Max camber</div><div class="sv" id="r-m">–</div></div>
+                <div class="stat-box"><div class="sl">At x/c</div><div class="sv" id="r-p">–</div></div>
+                <div class="stat-box"><div class="sl">Thickness</div><div class="sv" id="r-t">–</div></div>
+                <div class="stat-box"><div class="sl" style="text-transform:none">&Delta;&phi; step</div><div class="sv" id="r-dphi">–</div></div>
+                <div class="stat-box"><div class="sl">Total points</div><div class="sv" id="r-n">–</div></div>
+                <div class="stat-box"><div class="sl">TE gap</div><div class="sv" id="r-gap">–</div></div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═════════ MAJOR DESIGN CHOICES ═════════ -->
+  <section class="proj-section" id="design-choices">
+    <div class="section-header"><h2 class="section-title">Major design choices</h2></div>
+    <div class="project-body">
+      <ul class="key-results">
+        <li><strong>Cosine point spacing.</strong> Points sit at \(x = 1 - \cos\varphi\) instead of evenly along the
+          chord. The nose has the tightest curvature and matters most to analysis codes, so points cluster there; the
+          nearly straight rear needs fewer. Evenly spaced, 41 points leave the nose of a 12&nbsp;% section visibly faceted.</li>
+        <li><strong>Thickness applied perpendicular to the camber line.</strong> This is the true NACA definition.
+          Adding thickness straight up and down is simpler but shifts the nose and changes its radius on cambered sections.</li>
+        <li><strong>Open or closed trailing edge.</strong> The original equation leaves a small gap at the tail (0.25&nbsp;%
+          of chord for a 12&nbsp;% section), which matches published NACA data. One coefficient change closes it with the
+          smallest change to the shape, which CAD lofts and meshing tools need.</li>
+        <li><strong>Two export formats.</strong> The .dat file is normalised to unit chord in the order XFOIL and XFLR5
+          expect (tail &rarr; upper surface &rarr; nose &rarr; lower surface &rarr; tail). The .csv is scaled to the chosen
+          chord length for CAD.</li>
+        <li><strong>Left out: other NACA series.</strong> The 5-digit and 6-series families depend on tabulated constants.
+          The 4-digit family covers most model aircraft, small drone and teaching use, so it was the best return for the effort.</li>
+        <li><strong>Left out: aerodynamic analysis.</strong> XFOIL and XFLR5 are free and well validated. Writing a solver
+          would add risk without adding accuracy, so the tool focuses on clean geometry for them.</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- ═════════ DESIGN ═════════ -->
+  <section class="proj-section" id="design">
+    <div class="section-header"><h2 class="section-title">Design</h2></div>
+    <div class="project-body">
+      <p>The generator follows the standard NACA 4-digit equations (Abbott &amp; von Doenhoff). All lengths are
+        fractions of the chord until the final scaling step.</p>
+
+      <div class="eq-block">
+        <div class="eq-row">
+          <div class="eq-name">Read the code</div>
+          <div class="eq-math">\[ m = \frac{d_1}{100}, \qquad p = \frac{d_2}{10}, \qquad t = \frac{d_3 d_4}{100} \]</div>
+        </div>
+        <div class="eq-row">
+          <div class="eq-name">Point spacing</div>
+          <div class="eq-math">\[ \varphi_i = \frac{(i-1)\,90^\circ}{N-1}, \qquad x_i = 1 - \cos\varphi_i \]</div>
+        </div>
+        <div class="eq-row">
+          <div class="eq-name">Thickness</div>
+          <div class="eq-math">\[ y_t = 5t\left(0.2969\sqrt{x} - 0.1260\,x - 0.3516\,x^2 + 0.2843\,x^3 + a_4 x^4\right) \]
+            \[ a_4 = -0.1015 \ \text{(open)} \quad\text{or}\quad {-0.1036} \ \text{(closed)} \]</div>
+        </div>
+        <div class="eq-row">
+          <div class="eq-name">Camber line</div>
+          <div class="eq-math">\[ y_c = \begin{cases} \dfrac{m}{p^2}\left(2px - x^2\right) & 0 \le x < p \\[8pt] \dfrac{m}{(1-p)^2}\left(1 - 2p + 2px - x^2\right) & p \le x \le 1 \end{cases} \]</div>
+        </div>
+        <div class="eq-row">
+          <div class="eq-name">Camber slope</div>
+          <div class="eq-math">\[ \frac{dy_c}{dx} = \begin{cases} \dfrac{2m}{p^2}\,(p - x) & 0 \le x < p \\[8pt] \dfrac{2m}{(1-p)^2}\,(p - x) & p \le x \le 1 \end{cases} \qquad \theta = \arctan\frac{dy_c}{dx} \]</div>
+        </div>
+        <div class="eq-row">
+          <div class="eq-name">Surfaces</div>
+          <div class="eq-math">\[ \begin{aligned} x_U &= x - y_t\sin\theta, & y_U &= y_c + y_t\cos\theta \\ x_L &= x + y_t\sin\theta, & y_L &= y_c - y_t\cos\theta \end{aligned} \]</div>
+        </div>
+        <div class="eq-row">
+          <div class="eq-name">Scale to chord</div>
+          <div class="eq-math">\[ (X,\ Y) = c\,(x,\ y) \]</div>
+        </div>
+      </div>
+
+      <ul>
+        <li><strong>Symmetric sections skip the camber step.</strong> When the first digit is 0 the camber line is
+          zero everywhere, which also avoids dividing by \(p = 0\).</li>
+        <li><strong>The code is read as text,</strong> so 0012 keeps its leading zeros. Codes that can't exist, such
+          as 2012 (camber with no position for it), are rejected with a clear message.</li>
+        <li><strong>The nose point is written once.</strong> Both surfaces start at the same leading-edge point, so the
+          export skips the duplicate that would otherwise create a zero-length panel in XFOIL.</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- ═════════ RESULTS ═════════ -->
+  <section class="proj-section" id="results">
+    <div class="section-header"><h2 class="section-title">Results</h2></div>
+    <div class="project-body">
+      <p>Each output was checked against the property the code is meant to describe:</p>
+      <ul class="key-results">
+        <li><strong>NACA 0012:</strong> maximum thickness of 12.00&nbsp;% of chord, at 30&nbsp;% chord.</li>
+        <li><strong>NACA 2412:</strong> camber line peaks at 2.00&nbsp;% of chord at 40&nbsp;% chord, with the slope
+          continuous where the two camber equations meet.</li>
+        <li><strong>Trailing edge:</strong> the closed option ends at exactly zero thickness (to 10<sup>&minus;16</sup>);
+          the open option leaves the expected 0.25&nbsp;% gap on a 12&nbsp;% section.</li>
+        <li><strong>Browser and MATLAB agree</strong> to within 5&times;10<sup>&minus;7</sup> of chord for 0012, 2412 and
+          4415, the rounding limit of the exported files.</li>
+      </ul>
+      <p>These checks also caught bugs in the first MATLAB version: the camber line used its front equation along the
+        whole chord, the slope equation used thickness where it should have used \(x\), the upper surface took the
+        cosine of \(x\) instead of \(\theta\), and the export copied the upper surface&rsquo;s heights onto the lower
+        surface. Reading the code as a number also turned 0012 into 12. Together these put a 2412&rsquo;s upper surface
+        up to 2.5&nbsp;% of chord out. All are fixed in both versions.</p>
+    </div>
+  </section>
+
+  <!-- ═════════ FUTURE DEVELOPMENTS ═════════ -->
+  <section class="proj-section" id="future-developments">
+    <div class="section-header"><h2 class="section-title">Future developments</h2></div>
+    <div class="project-body">
+      <ul class="key-results">
+        <li><strong>Full-cosine spacing option.</strong> Spacing points with \(x = \tfrac{1}{2}(1 - \cos\beta)\) clusters
+          them at the tail as well as the nose. Worth adding: a one-line change that improves trailing-edge detail for CFD meshes.</li>
+        <li><strong>Rib export for laser cutting.</strong> An SVG or DXF outline at true scale, with spar slots, would
+          take a model builder straight from code to cut parts. Worth adding: it removes the CAD step for the main audience.</li>
+        <li><strong>5-digit series.</strong> Adds reflexed sections suited to flying wings. Useful, but it needs the
+          tabulated camber constants, so it is a bigger job than the other two.</li>
+        <li><strong>Built-in lift and drag.</strong> Not necessary: XFOIL and XFLR5 already do this well and read the
+          exported file directly.</li>
+      </ul>
+    </div>
+  </section>
+
+</main>
+
+<footer>
+  <span>Hamish Stuart</span>
+  <span>Engineering Portfolio</span>
+</footer>
+
+<script>
+// ── NACA 4-digit geometry (same maths as files/naca4.m) ─────────────────────
+function naca4(code, n, closedTE) {
+  const m = +code[0] / 100, p = +code[1] / 10, t = +code.slice(2) / 100;
+  const a4 = closedTE ? -0.1036 : -0.1015;
+  const up = [], lo = [], cam = [];
+  for (let i = 0; i < n; i++) {
+    const phi = (i * Math.PI / 2) / (n - 1);
+    const x = 1 - Math.cos(phi);
+    const yt = 5 * t * (0.2969 * Math.sqrt(x) - 0.1260 * x - 0.3516 * x ** 2 + 0.2843 * x ** 3 + a4 * x ** 4);
+    let yc = 0, dyc = 0;
+    if (m > 0) {
+      if (x < p) { yc = m / p ** 2 * (2 * p * x - x * x);                   dyc = 2 * m / p ** 2 * (p - x); }
+      else       { yc = m / (1 - p) ** 2 * (1 - 2 * p + 2 * p * x - x * x); dyc = 2 * m / (1 - p) ** 2 * (p - x); }
+    }
+    const th = Math.atan(dyc);
+    up.push([x - yt * Math.sin(th), yc + yt * Math.cos(th)]);
+    lo.push([x + yt * Math.sin(th), yc - yt * Math.cos(th)]);
+    cam.push([x, yc]);
+  }
+  return { m, p, t, up, lo, cam };
+}
+
+// Selig order: tail -> upper -> nose -> lower -> tail, nose point once
+function seligPoints(af) { return af.up.slice().reverse().concat(af.lo.slice(1)); }
+
+function validate(code) {
+  if (!/^\d{4}$/.test(code)) return 'Enter exactly 4 digits, e.g. 2412.';
+  if (code[0] !== '0' && code[1] === '0') return 'The second digit can’t be 0 when the first isn’t: a cambered section needs a camber position.';
+  if (code.slice(2) === '00') return 'The last two digits set thickness, so they can’t be 00.';
+  return '';
+}
+
+// ── UI ───────────────────────────────────────────────────────────────────────
+const $ = id => document.getElementById(id);
+const svg = $('plot'), NS = 'http://www.w3.org/2000/svg';
+let current = null;   // last valid airfoil + settings
+
+function el(tag, attrs, parent) {
+  const e = document.createElementNS(NS, tag);
+  for (const k in attrs) e.setAttribute(k, attrs[k]);
+  parent.appendChild(e); return e;
+}
+
+function update() {
+  const code = $('code').value.trim();
+  const err = validate(code);
+  $('gen-error').textContent = err;
+  $('code').setAttribute('aria-invalid', err ? 'true' : 'false');
+  $('dl-dat').disabled = $('dl-csv').disabled = !!err;
+  $('pts-val').textContent = $('pts').value;
+  if (err) return;
+
+  const n = +$('pts').value, closed = $('te').value === 'closed';
+  const af = naca4(code, n, closed);
+  current = { code, n, closed, af };
+
+  const pct = v => (v * 100).toFixed(v * 100 % 1 ? 1 : 0) + ' %';
+  $('r-m').textContent = pct(af.m);
+  $('r-p').textContent = af.m ? af.p.toFixed(1) : '–';
+  $('r-t').textContent = pct(af.t);
+  $('r-dphi').textContent = (90 / (n - 1)).toFixed(2) + '°';
+  $('r-n').textContent = 2 * n - 1;
+  const gap = af.up[n - 1][1] - af.lo[n - 1][1];
+  $('r-gap').textContent = Math.abs(gap) < 1e-9 ? '0' : (gap * 100).toFixed(2) + ' %';
+  draw();
+}
+
+function draw() {
+  if (!current) return;
+  const { af } = current;
+  const ys = af.up.concat(af.lo).map(p => p[1]);
+  const ymax = Math.max(...ys), ymin = Math.min(...ys);
+  const x0 = -0.04, W = 1.08;
+  const H = Math.max(0.3, ymax - ymin + 0.14);
+  const cy = (ymax + ymin) / 2;
+  const top = -(cy + H / 2) - 0.01;              // svg y is -y
+  svg.setAttribute('viewBox', `${x0} ${top} ${W} ${H}`);
+  svg.style.aspectRatio = `${W} / ${H}`;
+  svg.textContent = '';
+
+  const k = (svg.clientWidth || 600) / W;        // px per chord unit
+  const bottom = top + H;
+  for (let i = 0; i <= 10; i++) {
+    el('line', { class: 'af-grid', x1: i / 10, x2: i / 10, y1: top, y2: bottom - 18 / k, 'vector-effect': 'non-scaling-stroke' }, svg);
+  }
+  el('line', { class: 'af-chord', x1: 0, x2: 1, y1: 0, y2: 0, 'vector-effect': 'non-scaling-stroke' }, svg);
+  for (const v of [0, 0.25, 0.5, 0.75, 1]) {
+    const t = el('text', { class: 'af-tick', x: v, y: bottom - 5 / k, 'font-size': 10 / k, 'text-anchor': 'middle' }, svg);
+    t.textContent = v;
+  }
+
+  const path = pts => 'M' + pts.map(p => `${p[0].toFixed(5)},${(-p[1]).toFixed(5)}`).join('L');
+  if ($('show-camber').checked && af.m > 0) {
+    el('path', { class: 'af-camber', d: path(af.cam), 'vector-effect': 'non-scaling-stroke' }, svg);
+  }
+  el('path', { class: 'af-surface', d: path(seligPoints(af)) + 'Z', 'vector-effect': 'non-scaling-stroke' }, svg);
+  if ($('show-pts').checked) {
+    for (const p of seligPoints(af)) el('circle', { class: 'af-point', cx: p[0], cy: -p[1], r: 1.9 / k }, svg);
+  }
+  svg.setAttribute('aria-label', `NACA ${current.code} airfoil section`);
+}
+
+// 6 decimal places, without printing -0.000000
+const fmt = v => (Math.abs(v) < 5e-7 ? 0 : v).toFixed(6);
+
+function download(name, text) {
+  const url = URL.createObjectURL(new Blob([text], { type: 'text/plain' }));
+  const a = Object.assign(document.createElement('a'), { href: url, download: name });
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
+$('dl-dat').addEventListener('click', () => {
+  if (!current) return;
+  const rows = seligPoints(current.af).map(p => ` ${fmt(p[0])}  ${fmt(p[1])}`);
+  download(`naca${current.code}.dat`, `NACA ${current.code}\n` + rows.join('\n') + '\n');
+});
+$('dl-csv').addEventListener('click', () => {
+  if (!current) return;
+  const c = parseFloat($('chord').value);
+  if (!(c > 0)) { $('gen-error').textContent = 'Chord length must be a number above 0.'; return; }
+  const rows = seligPoints(current.af).map(p => `${fmt(p[0] * c)}\t${fmt(p[1] * c)}`);
+  download(`naca${current.code}.csv`, rows.join('\n') + '\n');
+});
+
+document.querySelectorAll('.preset-row button').forEach(b =>
+  b.addEventListener('click', () => { $('code').value = b.dataset.code; update(); }));
+['code', 'pts', 'te', 'show-pts', 'show-camber'].forEach(id => $(id).addEventListener('input', update));
+$('chord').addEventListener('input', () => { if (parseFloat($('chord').value) > 0) $('gen-error').textContent = validate($('code').value.trim()); });
+new ResizeObserver(draw).observe(svg.parentElement);
+update();
+</script>
+
+</body>
+</html>
