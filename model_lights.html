@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Model Aircraft Lighting Controller — Hamish Stuart</title>
+<link rel="stylesheet" href="styles.css"/>
+</head>
+<body>
+
+<header>
+  <a class="logo" href="main.html">Professional portfolio</a>
+  <nav>
+    <a href="main.html#completed">Completed</a>
+    <a href="main.html#wip">In Progress</a>
+    <a href="main.html#future">Future</a>
+  </nav>
+</header>
+
+<div class="hero">
+  <a class="back-link" href="main.html">&larr; Back to portfolio</a>
+
+  <h1>MODEL AIRCRAFT LIGHTING CONTROLLER</h1>
+
+  <p class="hero-sub">A 28 &times; 20&nbsp;mm board that gives 1/72&ndash;1/35 scale model aircraft working
+    navigation strobes, a beacon, taxi and cabin lights, with adjustable brightness and flash timing
+    and no microcontroller.</p>
+
+  <div class="project-meta">
+    <span><strong>Status</strong>Rev 1.0 designed, not yet built</span>
+    <span><strong>Type</strong>Personal project</span>
+    <span><strong>Date</strong>2026</span>
+    <span><strong>Tools</strong>Falstad, KiCad, Freerouting</span>
+  </div>
+</div>
+
+<main class="content">
+
+  <section class="proj-section">
+    <div class="section-header"><h2 class="section-title">The problem</h2></div>
+    <div class="project-body">
+      <p>Real aircraft carry several light groups that behave differently: red and green navigation lights,
+        white wingtip strobes, a beacon, taxi lights and cabin lighting. Reproducing that in a plastic kit
+        means driving ten 0402 LEDs (1.0 &times; 0.5&nbsp;mm) from a board small enough to hide in a fuselage or display base.</p>
+      <p>The brief: switch each light group independently, dim everything from one control, and adjust both how
+        often the strobes fire and how long each flash lasts.</p>
+    </div>
+  </section>
+
+  <section class="proj-section">
+    <div class="section-header"><h2 class="section-title">How it works</h2></div>
+    <div class="project-body">
+      <div class="diagram-wrap">
+        <svg class="diagram" viewBox="0 0 900 330" role="img"
+             aria-label="Block diagram: 5 V power feeds a 4-way DIP switch, which feeds ten LED outputs. Strobe LED returns go through a strobe switch transistor, then all returns go through a PWM switch transistor to ground. One half of a TLC556 timer drives the strobe switch, the other half drives the PWM switch.">
+          <defs>
+            <marker id="dg-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+              <path class="dg-head" d="M0,0 L10,5 L0,10 Z"/>
+            </marker>
+          </defs>
+
+          <!-- top row: power → switch → LEDs -->
+          <rect class="dg-box" x="20"  y="30" width="200" height="70"/>
+          <text class="dg-title" x="36" y="60">POWER IN</text>
+          <text class="dg-sub"   x="36" y="82">5 V, reverse-polarity diode</text>
+
+          <rect class="dg-box" x="280" y="30" width="200" height="70"/>
+          <text class="dg-title" x="296" y="60">DIP SWITCH</text>
+          <text class="dg-sub"   x="296" y="82">NAV, BCN, TAXI, INT</text>
+
+          <rect class="dg-box" x="540" y="30" width="340" height="70"/>
+          <text class="dg-title" x="556" y="60">10 LED OUTPUTS</text>
+          <text class="dg-sub"   x="556" y="82">One resistor per LED, 4&ndash;5 mA each</text>
+
+          <path class="dg-line" d="M220,65 H278" marker-end="url(#dg-arrow)"/>
+          <text class="dg-label" x="249" y="56" text-anchor="middle">5 V</text>
+          <path class="dg-line" d="M480,65 H538" marker-end="url(#dg-arrow)"/>
+          <text class="dg-label" x="510" y="56" text-anchor="middle">4 rails</text>
+
+          <!-- LED returns down to the switches -->
+          <path class="dg-line" d="M620,100 V168" marker-end="url(#dg-arrow)"/>
+          <text class="dg-label" x="628" y="140">strobe LEDs</text>
+          <path class="dg-line" d="M810,100 V238" marker-end="url(#dg-arrow)"/>
+          <text class="dg-label" x="802" y="140" text-anchor="end">steady LEDs</text>
+
+          <!-- low-side switches -->
+          <rect class="dg-box" x="540" y="170" width="160" height="55"/>
+          <text class="dg-title" x="556" y="194">Q2 STROBE</text>
+          <text class="dg-sub"   x="556" y="213">LEDs 1, 2, 4, 5</text>
+
+          <rect class="dg-box" x="730" y="240" width="150" height="55"/>
+          <text class="dg-title" x="746" y="264">Q1 PWM</text>
+          <text class="dg-sub"   x="746" y="283">All 10 LEDs</text>
+
+          <path class="dg-line" d="M700,197 H760 V238" marker-end="url(#dg-arrow)"/>
+          <path class="dg-line" d="M805,295 V318"/>
+          <path class="dg-rule" d="M790,320 H820"/>
+          <text class="dg-label" x="828" y="324">GND</text>
+
+          <!-- dual timer -->
+          <rect class="dg-group" x="10" y="150" width="360" height="160"/>
+          <text class="dg-label" x="20" y="142">TLC556 dual CMOS timer</text>
+
+          <rect class="dg-box" x="20" y="170" width="340" height="55"/>
+          <text class="dg-title" x="36" y="194">TIMER A: STROBE</text>
+          <text class="dg-sub"   x="36" y="213">RV2 interval 0.3&ndash;3.8 s, RV3 flash 10&ndash;200 ms</text>
+
+          <rect class="dg-box" x="20" y="240" width="340" height="55"/>
+          <text class="dg-title" x="36" y="264">TIMER B: BRIGHTNESS</text>
+          <text class="dg-sub"   x="36" y="283">RV1 sets duty cycle, 1&ndash;99 %</text>
+
+          <path class="dg-line" d="M360,197 H538" marker-end="url(#dg-arrow)"/>
+          <text class="dg-label" x="449" y="188" text-anchor="middle">flash pulse</text>
+          <path class="dg-line" d="M360,267 H728" marker-end="url(#dg-arrow)"/>
+          <text class="dg-label" x="544" y="258" text-anchor="middle">PWM, ~650 Hz</text>
+        </svg>
+      </div>
+
+      <ul>
+        <li><strong>One chip, two jobs:</strong> a TLC556 dual CMOS timer runs both functions. Unit A is an astable
+          oscillator with a steering diode, so flash length (charge path) and time between flashes (discharge path)
+          are set by separate trimmers instead of being tied together.</li>
+        <li><strong>Brightness by PWM, not resistance:</strong> unit B generates a ~650&nbsp;Hz square wave whose duty
+          cycle is set by one trimmer with steering diodes, keeping the frequency roughly constant across the range.
+          Dimming the whole board from a single low-side transistor keeps every LED's colour consistent.</li>
+        <li><strong>Stacked switches:</strong> strobe LEDs return through Q2 and then Q1, so they only light when a flash
+          pulse <em>and</em> the PWM are both high. The brightness setting therefore applies to the strobes too.</li>
+        <li><strong>Switching on the high side:</strong> the DIP switch feeds each group's anode rail, so turning a group
+          off removes its supply without disturbing the timing circuitry.</li>
+      </ul>
+
+      <div class="table-wrap">
+        <table class="data-table">
+          <thead><tr><th>Control</th><th>Lights</th><th>Behaviour</th></tr></thead>
+          <tbody>
+            <tr><td>DIP 1 &ndash; NAV</td><td>LEDs 1&ndash;5</td><td>Red/green nav and wingtips strobe, tail steady</td></tr>
+            <tr><td>DIP 2 &ndash; BCN</td><td>LED 6</td><td>Beacon</td></tr>
+            <tr><td>DIP 3 &ndash; TAXI</td><td>LEDs 7, 8</td><td>Steady</td></tr>
+            <tr><td>DIP 4 &ndash; INT</td><td>LEDs 9, 10</td><td>Steady</td></tr>
+            <tr><td>RV1 &ndash; BRT</td><td>All</td><td>Brightness, 1&ndash;99 %</td></tr>
+            <tr><td>RV2 &ndash; INT</td><td>Strobes</td><td>Time between flashes, 0.3&ndash;3.8 s</td></tr>
+            <tr><td>RV3 &ndash; LEN</td><td>Strobes</td><td>Flash length, 10&ndash;200 ms</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <section class="proj-section">
+    <div class="section-header"><h2 class="section-title">The board</h2></div>
+    <div class="project-body">
+           <img class="img-center" src="lights2.JPG" width="400" alt="Top side of the 28 x 20 mm lighting controller PCB">
+
+      <ul class="key-results">
+        <li><strong>28 &times; 20 &times; 1.0&nbsp;mm,</strong> two layers, 34 parts, with every SMD part on the top side.</li>
+        <li><strong>Clean checks:</strong> KiCad DRC with 0 errors and 0 unconnected pads, and a pad-by-pad comparison
+          of the PCB against the schematic netlist with 0 mismatches.</li>
+        <li><strong>Pin order chosen for size:</strong> the LED connector groups the strobing LEDs together, so pads on
+          the same net sit side by side and connect directly, which saved routing space.</li>
+        <li><strong>Hard to wire wrong:</strong> a Schottky diode makes a reversed 2-wire supply harmless, and
+          control functions and LED numbers are printed on the silkscreen.</li>
+        <li><strong>About 45&nbsp;mA</strong> with everything on at full brightness.</li>
+      </ul>
+    </div>
+  </section>
+
+  <section class="proj-section">
+    <div class="section-header"><h2 class="section-title">What I learned</h2></div>
+    <div class="project-body">
+      <p>Prototyping in Falstad first caught real wiring mistakes before any layout, but it also taught me to question
+        the simulator. The steady interior lights appeared to flash on the scope; that turned out to be the slow scope
+        sampling the 650&nbsp;Hz PWM and aliasing it into a false pattern, not a circuit fault.</p>
+      <p>Next steps are a breadboard check, then rev 1.1: a polarised JST-PH battery connector and a 2&nbsp;&times;&nbsp;6
+        LED header with shared cathode returns, cutting the wires through a 1/72 fuselage from 20 to 12.</p>
+    </div>
+  </section>
+
+</main>
+
+<footer>
+  <span>Hamish Stuart</span>
+  <span>Engineering Portfolio</span>
+</footer>
+
+</body>
+</html>

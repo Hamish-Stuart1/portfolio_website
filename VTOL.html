@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <style>
+    img {
+  float: right;
+}
+  </style>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>2D VTOL Hover &amp; Trajectory Control — Hamish Stuart</title>
+<link rel="stylesheet" href="styles.css"/>
+</head>
+<body>
+
+<header>
+  <a class="logo" href="main.html">Professional portfolio</a>
+  <nav>
+    <a href="main.html#completed">Completed</a>
+    <a href="main.html#wip">In Progress</a>
+    <a href="main.html#future">Future</a>
+  </nav>
+</header>
+
+<div class="hero">
+  <a class="back-link" href="main.html">&larr; Back to portfolio</a>
+
+  <h1>2D VTOL HOVER &amp; TRAJECTORY CONTROL</h1>
+
+  <p class="hero-sub">An LQG controller (LQR with integral action and a Kalman filter) that holds a
+    simulated Harrier-style jump jet in hover and flies waypoint missions, despite wind, sensor noise
+    and model error that were hidden inside a black-box simulator.</p>
+
+  <div class="project-meta">
+    <span><strong>Status</strong>Completed</span>
+    <span><strong>Type</strong>University assignment (EGH445, QUT)</span>
+    <span><strong>Date</strong>2026</span>
+    <span><strong>Tools</strong>MATLAB R2025b, Symbolic Math Toolbox</span>
+  </div>
+</div>
+
+<main class="content">
+
+  <section class="proj-section">
+    <div class="section-header"><h2 class="section-title">The problem</h2></div>
+    <div class="project-body">
+      <p><img src="vtol2.png" width="250">A VTOL aircraft is underactuated: it has two thrust inputs but three degrees of freedom
+        (x, y and pitch). To move sideways it has to tilt, so position and attitude are tightly coupled.
+        On top of that, only position and pitch could be measured. All three velocities had to be estimated.</p>
+      <p>The controller was tested against a black-box plant with unknown parameter error,
+        a steady crosswind and Gaussian sensor noise.</p>
+        
+        
+    </div>
+  </section>
+
+  <section class="proj-section">
+    <div class="section-header"><h2 class="section-title">Approach</h2></div>
+    <div class="project-body">
+      <ul>
+        <li><strong>Linearisation:</strong> symbolic Jacobians of the 6-state nonlinear model about hover,
+          then zero-order-hold discretisation at 5&nbsp;ms (checked against a first-order Euler approximation,
+          max error 4.9&times;10<sup>-4</sup>).</li>
+        <li><strong>LQR state feedback:</strong> Q and R weights set with Bryson's rule from physical limits
+          (1&nbsp;m position, 0.5&nbsp;rad pitch, 15&nbsp;N thrust). Closed-loop time constants of 0.14&ndash;0.49&nbsp;s,
+          with the resulting gain naturally decoupling the vertical and lateral channels.</li>
+        <li><strong>Integral action (LQI):</strong> open-loop probing showed the crosswind caused unbounded
+          lateral drift, so the state was augmented with position-error integrators, with anti-windup near saturation.</li>
+        <li><strong>Kalman filter:</strong> a steady-state filter reconstructs the three unmeasured velocities,
+          with observer poles placed faster than the controller's. Combined with LQR via the separation principle.</li>
+        <li><strong>Reference generator:</strong> cosine-ramp trajectories (zero velocity at each end) with a
+          waypoint mode, avoiding the saturation a step reference would cause.</li>
+      </ul>
+    </div>
+  </section>
+
+  <section class="proj-section">
+    <div class="section-header"><h2 class="section-title">Results</h2></div>
+    <div class="project-body">
+      <ul class="key-results">
+        <li><strong>Stable hover</strong> for 60&nbsp;s in crosswind: vertical error near zero, lateral error bounded within about &plusmn;0.15&nbsp;m.</li>
+        <li><strong>Small attitude excursions:</strong> pitch stayed within a few degrees, well inside the &plusmn;15&deg; linearisation limit.</li>
+        <li><strong>No actuator saturation</strong> in hover or during the waypoint mission.</li>
+        <li><strong>Fast estimation:</strong> the Kalman filter converged on position within 3&nbsp;s and on velocities within 4&nbsp;s.</li>
+      </ul>
+<br>
+      <figure>
+        <img src="vtol-waypoint-path.png" width="250"/>
+        <figcaption>Take-off, traverse and landing mission. The arcs between waypoints come from the
+          aircraft having to tilt to accelerate sideways, not from a tracking failure.</figcaption>
+      </figure>
+<br>
+      <div class="fig-pair">
+        <figure>
+          <img src="vtol-hover-error.png" width="250"/>
+          <figcaption>Hover in crosswind: errors stay bounded over 60&nbsp;s.</figcaption>
+        </figure>
+        <br>
+        <figure>
+          <img src="vtol-observer.png" width="250"/>
+          <figcaption>Observer test: estimates converge from a 1&nbsp;m step.</figcaption>
+        </figure>
+      </div>
+    </div>
+  </section>
+<br>
+  <section class="proj-section">
+    <div class="section-header"><h2 class="section-title">What I learned</h2></div>
+    <div class="project-body">
+      <p>The biggest lesson was how much the plant's physics shapes what &ldquo;good tracking&rdquo; looks like:
+        an underactuated aircraft can't fly a straight diagonal, so judging the controller meant understanding
+        the dynamics, not just the error plots. Probing the black box before designing (instead of assuming
+        ideal conditions) is what revealed the need for integral action.</p>
+      <p>Next steps would be a path-planning layer that generates attitude-aware trajectories, automated
+        LQR tuning, and a comparison against nonlinear MPC.</p>
+    </div>
+  </section>
+
+</main>
+
+<footer>
+  <span>Hamish Stuart</span>
+  <span>Engineering Portfolio</span>
+</footer>
+
+</body>
+</html>

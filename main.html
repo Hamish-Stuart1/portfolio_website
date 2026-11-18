@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Hamish Stuart — Portfolio</title>
+<link rel="stylesheet" href="styles.css"/>
+</head>
+<body>
+
+<header>
+  <a class="logo" href="main.html">Professional portfolio</a>
+  <nav>
+    <a href="#completed">Completed</a>
+    <a href="#wip">In Progress</a>
+    <a href="#future">Future</a>
+  </nav>
+</header>
+
+<div class="hero">
+  <h1>PROFESSIONAL PORTFOLIO</h1>
+  <p class="hero-sub">Hello page visitors! My name is Hamish Stuart, I'm 22 years old and currently in the last year of my Engineering degree.
+    This website contains my professional portfolio as an aspiring Electrical Engineer. The projects documented on this page are made up of personal projects,
+    university assignments, and demonstrators/visualisers of concepts and topics that I hope to work in one day and enjoy designing.</p>
+</div>
+
+<main class="content">
+
+  <!-- ═════════ COMPLETED ═════════ -->
+  <section class="proj-section" id="completed">
+    <div class="section-header">
+      <h2 class="section-title">Completed</h2>
+      <div class="scroll-btns">
+        <button type="button" data-dir="-1" aria-label="Scroll Completed left">&larr;</button>
+        <button type="button" data-dir="1" aria-label="Scroll Completed right">&rarr;</button>
+      </div>
+    </div>
+    <div class="proj-row">
+
+      <!-- Robot Arm -->
+      <a class="proj-card" href="robotarm.html">
+        <div class="card-thumb">
+          <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+            <!-- axes -->
+            <line class="svg-grid" x1="20" y1="160" x2="185" y2="160" stroke-width="0.8" opacity="0.4"/>
+            <line class="svg-grid" x1="40" y1="160" x2="40"  y2="30"  stroke-width="0.8" opacity="0.4"/>
+            <!-- arm links -->
+            <line class="arm-1" x1="40"  y1="155" x2="95"  y2="90"  stroke-width="3"   stroke-linecap="round"/>
+            <line class="arm-2" x1="95"  y1="90"  x2="135" y2="115" stroke-width="2.5" stroke-linecap="round"/>
+            <line class="arm-3" x1="135" y1="115" x2="155" y2="148" stroke-width="2"   stroke-linecap="round"/>
+            <!-- joints -->
+            <circle class="arm-1"    cx="40"  cy="155" r="5"/>
+            <circle class="arm-2"    cx="95"  cy="90"  r="4"/>
+            <circle class="arm-3"    cx="135" cy="115" r="3"/>
+            <circle class="arm-tool" cx="155" cy="148" r="3"/>
+            <!-- gripper -->
+            <line class="arm-tool" x1="150" y1="153" x2="148" y2="163" stroke-width="1.5"/>
+            <line class="arm-tool" x1="160" y1="153" x2="162" y2="163" stroke-width="1.5"/>
+            <!-- platforms -->
+            <rect class="arm-1" x="60"  y="152" width="20" height="5" opacity="0.7"/>
+            <rect class="arm-2" x="110" y="152" width="20" height="5" opacity="0.7"/>
+            <rect class="arm-3" x="148" y="152" width="20" height="5" opacity="0.7"/>
+            <!-- cargo -->
+            <rect class="arm-cargo" x="66" y="144" width="8" height="8" opacity="0.9"/>
+            <!-- labels -->
+            <g font-size="7" font-family="monospace" text-anchor="middle" stroke="none">
+              <text class="arm-1" x="70"  y="148">A</text>
+              <text class="arm-2" x="120" y="148">B</text>
+              <text class="arm-3" x="158" y="148">C</text>
+            </g>
+            <text class="svg-title" x="100" y="20" font-size="8" font-family="monospace" text-anchor="middle" opacity="0.6">3-DOF PICK &amp; PLACE</text>
+          </svg>
+        </div>
+        <div class="card-overlay"></div>
+        <div class="card-label">
+          <span>3-DOF Robot Arm Controller</span>
+        </div>
+      </a>
+      <a class="proj-card" href="VTOL.html">
+        <div class="card-thumb placeholder"><span class="placeholder-icon"><img src="vtol_img.png" width="330">
+</span></div>
+        <div class="card-overlay"></div>
+        <div class="card-label">
+          <span>VTOL control</span>
+          <span class="card-label-sub"></span>
+        </div>
+      </a>
+      <a class="proj-card" href="project.html">
+        <div class="card-thumb placeholder"><span class="placeholder-icon">03</span></div>
+        <div class="card-overlay"></div>
+        <div class="card-label">
+          <span>Coming soon</span>
+          <span class="card-label-sub"></span>
+        </div>
+      </a>
+      <a class="proj-card" href="project.html">
+        <div class="card-thumb placeholder"><span class="placeholder-icon">04</span></div>
+        <div class="card-overlay"></div>
+        <div class="card-label">
+          <span>Coming soon</span>
+          <span class="card-label-sub"></span>
+        </div>
+      </a>
+      <a class="proj-card" href="project.html">
+        <div class="card-thumb placeholder"><span class="placeholder-icon">05</span></div>
+        <div class="card-overlay"></div>
+        <div class="card-label">
+          <span>Coming soon</span>
+          <span class="card-label-sub"></span>
+        </div>
+      </a>
+      <a class="proj-card" href="project.html">
+        <div class="card-thumb placeholder"><span class="placeholder-icon">06</span></div>
+        <div class="card-overlay"></div>
+        <div class="card-label">
+          <span>Coming soon</span>
+          <span class="card-label-sub"></span>
+        </div>
+      </a>
+
+    </div>
+  </section>
+
+  <!-- ═════════ WORK IN PROGRESS ═════════ -->
+  <section class="proj-section" id="wip">
+    <div class="section-header">
+      <h2 class="section-title">Work in Progress</h2>
+      <div class="scroll-btns">
+        <button type="button" data-dir="-1" aria-label="Scroll Work in Progress left">&larr;</button>
+        <button type="button" data-dir="1" aria-label="Scroll Work in Progress right">&rarr;</button>
+      </div>
+    </div>
+    <div class="proj-row">
+
+      <!-- Blackbox Recorder -->
+      <a class="proj-card" href="blackbox.html">
+        <div class="card-thumb placeholder"></div>
+        <div class="card-overlay"></div>
+        <div class="card-label">
+          <span><span class="status-dot wip"></span>Blackbox Recorder</span>
+          <span class="card-label-sub">In progress</span>
+        </div>
+      </a>
+      <a class="proj-card" href="model_lights.html">
+        <div class="card-thumb placeholder"><span class="placeholder-icon"><img src="lightscover.png" width="250"></span></div>
+        <div class="card-overlay"></div>
+        <div class="card-label">
+          <span><span class="status-dot wip"></span>Model Lights</span>
+          <span class="card-label-sub">In progress</span>
+        </div>
+      </a>
+      <a class="proj-card" href="project.html">
+        <div class="card-thumb placeholder"><span class="placeholder-icon"><img src="lasercomm.png" width="250">
+         </span></div>
+        <div class="card-overlay"></div>
+        <div class="card-label">
+          <span><span class="status-dot wip"></span>Laser Communication</span>
+          <span class="card-label-sub">In progress</span>
+        </div>
+      </a>
+      <a class="proj-card" href="project.html">
+        <div class="card-thumb placeholder"><span class="placeholder-icon">04</span></div>
+        <div class="card-overlay"></div>
+        <div class="card-label">
+          <span><span class="status-dot wip"></span>WIP Project 4</span>
+          <span class="card-label-sub">In progress</span>
+        </div>
+      </a>
+      <a class="proj-card" href="project.html">
+        <div class="card-thumb placeholder"><span class="placeholder-icon">05</span></div>
+        <div class="card-overlay"></div>
+        <div class="card-label">
+          <span><span class="status-dot wip"></span>WIP Project 5</span>
+          <span class="card-label-sub">In progress</span>
+        </div>
+      </a>
+      <a class="proj-card" href="project.html">
+        <div class="card-thumb placeholder"><span class="placeholder-icon">06</span></div>
+        <div class="card-overlay"></div>
+        <div class="card-label">
+          <span><span class="status-dot wip"></span>WIP Project 6</span>
+          <span class="card-label-sub">In progress</span>
+        </div>
+      </a>
+
+    </div>
+  </section>
+
+  <!-- ═════════ FUTURE ═════════ -->
+  <section class="proj-section" id="future">
+    <div class="section-header">
+      <h2 class="section-title">Future</h2>
+      <div class="scroll-btns">
+        <button type="button" data-dir="-1" aria-label="Scroll Future left">&larr;</button>
+        <button type="button" data-dir="1" aria-label="Scroll Future right">&rarr;</button>
+      </div>
+    </div>
+    <div class="proj-row">
+
+      <a class="proj-card" href="project.html">
+        <div class="card-thumb placeholder"><span class="placeholder-icon">01</span></div>
+        <div class="card-overlay"></div>
+        <div class="card-label">
+          <span><span class="status-dot future"></span>Future Project 1</span>
+          <span class="card-label-sub">Planned</span>
+        </div>
+      </a>
+      <a class="proj-card" href="project.html">
+        <div class="card-thumb placeholder"><span class="placeholder-icon">02</span></div>
+        <div class="card-overlay"></div>
+        <div class="card-label">
+          <span><span class="status-dot future"></span>Future Project 2</span>
+          <span class="card-label-sub">Planned</span>
+        </div>
+      </a>
+      <a class="proj-card" href="project.html">
+        <div class="card-thumb placeholder"><span class="placeholder-icon">03</span></div>
+        <div class="card-overlay"></div>
+        <div class="card-label">
+          <span><span class="status-dot future"></span>Future Project 3</span>
+          <span class="card-label-sub">Planned</span>
+        </div>
+      </a>
+      <a class="proj-card" href="project.html">
+        <div class="card-thumb placeholder"><span class="placeholder-icon">04</span></div>
+        <div class="card-overlay"></div>
+        <div class="card-label">
+          <span><span class="status-dot future"></span>Future Project 4</span>
+          <span class="card-label-sub">Planned</span>
+        </div>
+      </a>
+      <a class="proj-card" href="project.html">
+        <div class="card-thumb placeholder"><span class="placeholder-icon">05</span></div>
+        <div class="card-overlay"></div>
+        <div class="card-label">
+          <span><span class="status-dot future"></span>Future Project 5</span>
+          <span class="card-label-sub">Planned</span>
+        </div>
+      </a>
+      <a class="proj-card" href="project.html">
+        <div class="card-thumb placeholder"><span class="placeholder-icon">06</span></div>
+        <div class="card-overlay"></div>
+        <div class="card-label">
+          <span><span class="status-dot future"></span>Future Project 6</span>
+          <span class="card-label-sub">Planned</span>
+        </div>
+      </a>
+
+    </div>
+  </section>
+
+</main>
+
+<footer>
+  <span>Hamish Stuart</span>
+  <span>Engineering Portfolio</span>
+</footer>
+
+<script>
+  // Arrow buttons scroll their row by one card
+  document.querySelectorAll('.proj-section').forEach(section => {
+    const row = section.querySelector('.proj-row');
+    section.querySelectorAll('.scroll-btns button').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const card = row.querySelector('.proj-card');
+        const step = card ? card.offsetWidth + 16 : row.clientWidth;
+        row.scrollBy({ left: step * Number(btn.dataset.dir) });
+      });
+    });
+  });
+</script>
+
+</body>
+</html>

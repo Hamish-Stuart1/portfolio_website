@@ -1,0 +1,664 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>3-DOF Robot Arm Controller - Portfolio Project</title>
+<style>
+  :root {
+    --bg: #ffffff;
+    --border: black;
+    --border2: #ffffff;
+    --text: #fff;
+    --muted: #fff;
+    --accent: #59ff4a;
+    --green: #59ff4a;
+    --orange: #f5844c;
+    --font: 'Inter', system-ui, -apple-system, sans-serif;
+    --mono: 'JetBrains Mono', 'Fira Code', 'Cascadia Code', monospace;
+    --black: #000;
+    --white: #fff;
+  }
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+  html{scroll-behavior:smooth;}
+  body{background:var(--black);color:var(--text);font-family:var(--font);font-size:15px;line-height:1.7;}
+  a{color:var(--accent);text-decoration:none;}
+  a:hover{text-decoration:underline;}
+  .page{max-width:960px;margin:0 auto;padding:0 24px;}
+  header{border-bottom:1px solid var(--white);padding:18px 0;}
+  .header-inner{max-width:960px;margin:0 auto;padding:0 24px;display:flex;align-items:center;justify-content:space-between;}
+  .logo{font-size:13px;font-weight:500;color:var(--white);letter-spacing:.04em;}
+  .nav{display:flex;gap:24px;font-size:13px;}
+  .nav a{color:var(--white);}
+  .nav a:hover{color:var(--text);text-decoration:none;}
+  .hero{padding:72px 0 56px;}
+  h1{font-size:clamp(28px,5vw,48px);font-weight:700;line-height:1.15;letter-spacing:-.02em;margin-bottom:20px;color:#fff;}
+  .section{padding:48px 0;border-top:1px solid var(--white);}
+  h2{font-size:22px;font-weight:600;color:#fff;margin-bottom:6px;}
+  h3{font-size:16px;font-weight:600;color:#fff;margin-bottom:8px;}
+  p{color:#fff;margin-bottom:12px;}
+  p:last-child{margin-bottom:0;}
+  /* demo shell */
+  .demo-shell{background:#000;border:1px solid var(--white);overflow:hidden;margin-top:28px;}
+  .demo-body{display:grid;grid-template-columns:240px 1fr;min-height:480px;}
+  .ctrl-panel{border-right:1px solid var(--border);padding:16px;display:flex;flex-direction:column;gap:14px;background:#000;}
+  .cp-label{font-size:10px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:white;}
+  .joint-row{display:flex;flex-direction:column;gap:5px;}
+  .jh{display:flex;justify-content:space-between;}
+  .jname{font-size:12px;font-weight:500;color:white;}
+  .jval{font-size:12px;font-family:var(--mono);color:white;}
+  input[type=range]{width:100%;-webkit-appearance:none;height:4px;background:var(--border2);border-radius:2px;outline:none;cursor:pointer;}
+  input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:14px;height:14px;border-radius:50%;background:var(--accent);cursor:pointer;}
+  .stat-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;}
+  .stat-box{background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:7px 8px;}
+  .stat-box .sl{font-size:9px;color: #000;text-transform:uppercase;letter-spacing:.06em;}
+  .stat-box .sv{font-size:14px;font-weight:600;color:#000;font-family:var(--mono);}
+  .fw-row{display:flex;flex-direction:column;gap:6px;}
+  .fw-item{display:flex;justify-content:space-between;align-items:center;}
+  .fw-key{font-size:11px;color:white;}
+  .badge{font-size:10px;padding:2px 8px;font-weight:500;}
+  .badge.ok{color:var(--green);}
+  .badge.warn{color:var(--orange);}
+  .btn-row{display:flex;gap:8px;}
+  button{flex:1;padding:7px 10px;font-size:11px;font-family:var(--font);border:1px solid var(--border2);border-radius:6px;background:transparent;color:white;cursor:pointer;transition:background .15s;}
+  button:hover{background:#222;}
+  button:disabled{opacity:.4;cursor:not-allowed;}
+  button.primary{background:var(--accent);color:#000;border-color:transparent;font-weight:600;}
+  button.primary:hover{opacity:.9;}
+  button.danger{border-color:red;color:red;}
+  button.home{border-color:orange;color:orange;}
+  .pp-row{display:flex;gap:6px;align-items:center;}
+  .pp-label{font-size:11px;color:white;min-width:28px;}
+  select{flex:1;padding:6px 8px;font-size:12px;font-family:var(--font);background:var(--bg);color: #000;border:1px solid var(--border2);border-radius:6px;outline:none;cursor:pointer;}
+  select:focus{border-color:var(--accent);}
+  /* right pane */
+  .right-pane{display:flex;flex-direction:column;}
+  .viz-area{flex:1;position:relative;}
+  svg#arm{width:100%;height:100%;min-height:300px;}
+  .log-area{height:100px;overflow-y:auto;border-top:1px solid var(--border);padding:8px 14px;font-family:var(--mono);font-size:11px;color:var(--green);background:black;}
+  .log-area p{line-height:1.8;white-space:pre;color:var(--green);}
+  .log-area p.warn{color:var(--orange);}
+  /* architecture cards */
+  .arch-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:16px;margin-top:24px;}
+  .arch-card{background:#000;border:1px solid var(--white);padding:20px;}
+  .arch-card h3{color:#fff;margin-bottom:6px;}
+  .arch-card ul{list-style:none;display:flex;flex-direction:column;gap:5px;}
+  .arch-card ul li{font-size:13px;color:#fff;padding-left:14px;position:relative;}
+  .arch-card ul li::before{content:'-';position:absolute;left:0;color:#fff;}
+  /* code block */
+  .code-block{background: #000;border:1px solid #fff;padding:16px 20px;overflow-x:auto;margin-top:16px;}
+  .code-block pre{font-family:var(--mono);font-size:12px;line-height:1.75;color: #fff;}
+  .kw{color:#e4ab56;}.fn{color:#527cd6;}.cm{color:#49c2e7;}.nu{color:#e66464;}.str{color:#c655d4;}
+  table{width:100%;border-collapse:collapse;margin-top:16px;font-size:13px; border: #fff;}
+  th{text-align:left;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.08em;color: #fff;padding:8px 12px;border-bottom:1px solid #fff;}
+  td{padding:10px 12px;border-bottom:1px solid #fff;color: #fff;font-family:var(--mono);}
+  td:first-child{color: #fff;font-family:var(--font);font-weight:500;}
+  footer{border-top:1px solid #fff;padding:28px 0;text-align:center;font-size:12px;color:var(--muted);}
+  @media(max-width:620px){.demo-body{grid-template-columns:1fr;}.ctrl-panel{border-right:none;border-bottom:1px solid var(--border);}.nav{display:none;}}
+  /* platform sliders */
+  .plat-slider-row{display:flex;align-items:center;gap:6px;}
+  .plat-slider-label{font-size:11px;font-weight:600;min-width:14px;}
+  .plat-slider-label.pA{color:red;}
+  .plat-slider-label.pB{color:green;}
+  .plat-slider-label.pC{color:blue;}
+  .plat-slider-mm{font-size:10px;font-family:var(--mono);color:white;min-width:36px;text-align:right;}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-inner">
+    <div class="logo" href="#main.html">Proffesional portfolio</div>
+    <nav class="nav">
+      <a href="#demo">Demo</a>
+      <a href="#architecture">Architecture</a>
+      <a href="#firmware">Firmware</a>
+      <a href="#kinematics">Kinematics</a>
+    </nav>
+  </div>
+</header>
+
+<main class="page">
+
+  <section class="hero">
+    <h1>3-DOF Robot Arm Controller</h1>
+  </section>
+
+  <section>
+    <h2>Live controller demo</h2>
+    <p>First 3 sliders allow manual joint adjustment. The position of the "claw" and percentage reach of
+      the arm is displayed below this. Platform positions can be moved in the sliders following this to test the
+      robustness of the reverse kinematic calculation script. Pick and place demonstrations must adhere to the following;
+      <ul>
+        <li id="demo">"from" dropdown must be the platform where the "cargo" (yellow box) currently is.</li>
+        <li id="demo">"to" dropdown and "from" must be different platforms.</li>
+      </ul>
+    </p>
+
+    <div class="demo-shell">
+      <div class="demo-body">
+
+        <div class="ctrl-panel">
+          <div>
+            <div class="cp-label" style="margin-bottom:8px">Joint control</div>
+            <div id="joints-container" style="display:flex;flex-direction:column;gap:10px"></div>
+          </div>
+          <div>
+            <div class="cp-label" style="margin-bottom:7px">End-effector position (mm)</div>
+            <div class="stat-grid">
+              <div class="stat-box"><div class="sl">X</div><div class="sv" id="sx">0</div></div>
+              <div class="stat-box"><div class="sl">Y</div><div class="sv" id="sy">0</div></div>
+              <div class="stat-box"><div class="sl">Reach %</div><div class="sv" id="sr">0</div></div>
+            </div>
+          </div>
+
+          <div>
+            <div class="cp-label" style="margin-bottom:8px">Platform positions</div>
+            <div style="display:flex;flex-direction:column;gap:7px;">
+              <div class="plat-slider-row">
+                <span class="plat-slider-label pA">A</span>
+                <input type="range" id="slPA" min="118" max="224" value="142" step="1" style="flex:1;"/>
+                <span class="plat-slider-mm" id="mmA">75mm</span>
+              </div>
+              <div class="plat-slider-row">
+                <span class="plat-slider-label pB">B</span>
+                <input type="range" id="slPB" min="118" max="224" value="175" step="1" style="flex:1;"/>
+                <span class="plat-slider-mm" id="mmB">182mm</span>
+              </div>
+              <div class="plat-slider-row">
+                <span class="plat-slider-label pC">C</span>
+                <input type="range" id="slPC" min="118" max="224" value="210" step="1" style="flex:1;"/>
+                <span class="plat-slider-mm" id="mmC">230mm</span>
+              </div>
+            </div>
+          </div>
+
+          <div>
+            <div class="cp-label" style="margin-bottom:8px">Pick &amp; place</div>
+            <div class="pp-row" style="margin-bottom:6px">
+              <span class="pp-label">From</span>
+              <select id="selFrom">
+                <option value="A">Platform A</option>
+                <option value="B">Platform B</option>
+                <option value="C">Platform C</option>
+              </select>
+            </div>
+            <div class="pp-row" style="margin-bottom:10px">
+              <span class="pp-label">To</span>
+              <select id="selTo">
+                <option value="A">Platform A</option>
+                <option value="B" selected>Platform B</option>
+                <option value="C">Platform C</option>
+              </select>
+            </div>
+            <button class="primary" id="btnRun" onclick="runPickPlace()"> RUN</button>
+          </div>
+
+          <div>
+            <div class="cp-label" style="margin-bottom:7px">Firmware status</div>
+            <div class="fw-row">
+              <div class="fw-item"><span class="fw-key">Torque limit</span><span class="badge ok" id="tlim">OK</span></div>
+              <div class="fw-item"><span class="fw-key">Stop</span><span class="badge ok" id="estop">Inactive</span></div>
+            </div>
+          </div>
+
+          <div class="btn-row">
+            <button class="home" onclick="runHome()">RESET</button>
+            <button class="danger" onclick="triggerEstop()">STOP</button>
+          </div>
+        </div>
+
+        <div class="right-pane">
+          <div class="viz-area">
+            <svg id="arm" viewBox="0 0 400 290">
+              <defs>
+                <marker id="arr" markerWidth="6" markerHeight="6" refX="3" refY="3" orient="auto">
+                  <path d="M0,0 L6,3 L0,6 Z" fill="#59ff4a"/>
+                </marker>
+              </defs>
+
+              <!-- floor -->
+              <line x1="10" y1="264" x2="395" y2="264" stroke="#59ff4a" stroke-width="1"/>
+              <!-- Y axis -->
+              <line x1="40" y1="264" x2="40" y2="20" stroke="#59ff4a" stroke-width="1" marker-end="url(#arr)"/>
+              <text x="44" y="16" font-size="9" fill="#59ff4a" font-family="monospace">Y</text>
+
+              <!-- Platform A -->
+              <rect id="platAbar"   y="256" height="8" fill="red"/>
+              <rect id="platAshelf" y="256" height="8" fill="red"/>
+              <text id="platAlbl" y="244" font-size="9" font-weight="600" fill="red" font-family="monospace" text-anchor="middle">A</text>
+              <rect id="objA" y="254" width="10" height="10" fill="yellow"/>
+
+              <!-- Platform B -->
+              <rect id="platBbar"   y="256" height="8" fill="green"/>
+              <rect id="platBshelf" y="256" height="8" fill="green"/>
+              <text id="platBlbl" y="244" font-size="9" font-weight="600" fill="green" font-family="monospace" text-anchor="middle">B</text>
+              <rect id="objB" y="254" width="10" height="10" fill="yellow" opacity="0"/>
+
+              <!-- Platform C -->
+              <rect id="platCbar"   y="256" height="8" fill="blue"/>
+              <rect id="platCshelf" y="256" height="8" fill="blue"/>
+              <text id="platClbl" y="244" font-size="9" font-weight="600" fill="blue" font-family="monospace" text-anchor="middle">C</text>
+              <rect id="objC" y="254" width="10" height="10" fill="yellow" opacity="0"/>
+
+              <!-- cargo -->
+              <rect id="cargo" x="0" y="0" width="10" height="10" fill="yellow" opacity="0"/>
+
+              <!-- arm links & joints -->
+              <g id="arm-g">
+                <line id="l1" stroke="red"    stroke-width="2.5"/>
+                <line id="l2" stroke="green"  stroke-width="2.5"/>
+                <line id="l3" stroke="blue"   stroke-width="2.5"/>
+                <circle id="j0" r="4" fill="red"/>
+                <circle id="j1" r="4" fill="green"/>
+                <circle id="j2" r="4" fill="blue"/>
+                <circle id="ee" r="4" fill="orange"/>
+                <line id="grip1" stroke="orange"/>
+                <line id="grip2" stroke="orange"/>
+              </g>
+              <text id="ee-label" font-size="9" fill="#59ff4a" font-family="monospace"></text>
+            </svg>
+          </div>
+          <div class="log-area" id="log"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section" id="architecture">
+    <h2>Software architecture</h2>
+    <p>The system follows a layered architecture with a strict interface boundary between the PC application and the embedded firmware. Communication is over a UART serial link at 115,200 baud using a lightweight binary packet protocol.</p>
+    <div class="arch-grid">
+      <div class="arch-card"><h3>PC application layer</h3><ul>
+        <li>WPF MVVM with data-binding to joint model</li>
+        <li>Real-time 2D kinematic viewport</li>
+        <li>SerialPort driver with framed packet protocol</li>
+        <li>Motion sequence editor with step playback</li>
+        <li>Torque warning and workspace limit UI</li>
+      </ul></div>
+      <div class="arch-card"><h3>Firmware layer (C)</h3><ul>
+        <li>50 Hz interrupt-driven control loop (TIM2)</li>
+        <li>PID position controller per joint</li>
+        <li>PWM output to servo drivers (TIM3/TIM4)</li>
+        <li>UART RX/TX with DMA for zero-blocking comms</li>
+        <li>Hardware E-stop via GPIO interrupt</li>
+      </ul></div>
+      <div class="arch-card"><h3>Mechanical design</h3><ul>
+        <li>3-DOF planar revolute kinematic chain</li>
+        <li>Link lengths: 120 mm / 90 mm / 60 mm</li>
+        <li>MG996R servos (J1/J2), SG90 micro (J3)</li>
+        <li>PLA/ABS printed structural links</li>
+        <li>Max reach: 270 mm, payload: ~150 g</li>
+      </ul></div>
+      <div class="arch-card"><h3>Comms protocol</h3><ul>
+        <li>Binary framed packet: SOF / CMD / DATA / CRC8</li>
+        <li>Commands: JOINT_SET, HOME, ESTOP, STATUS_REQ</li>
+        <li>20 ms telemetry heartbeat from firmware</li>
+        <li>PC-side ACK/NACK with retry logic</li>
+      </ul></div>
+    </div>
+  </section>
+
+  <section class="section" id="firmware">
+    <h2>Firmware control loop</h2>
+    <p>The firmware runs on an STM32F103 microcontroller. The main control task is triggered by a 50 Hz hardware timer interrupt, ensuring deterministic joint updates regardless of UART traffic. Each joint runs an independent PID position controller with configurable gains.</p>
+    <div class="code-block"><pre><span class="cm">/* arm_controller.c - main control loop (50 Hz TIM2 ISR) */</span>
+<span class="kw">#include</span> <span class="str">"arm_controller.h"</span>
+<span class="kw">#include</span> <span class="str">"servo_driver.h"</span>
+<span class="kw">#include</span> <span class="str">"uart_protocol.h"</span>
+
+<span class="kw">#define</span> NUM_JOINTS     <span class="nu">3</span>
+<span class="kw">#define</span> LOOP_FREQ_HZ   <span class="nu">50</span>
+<span class="kw">#define</span> DT             (<span class="nu">1.0f</span> / LOOP_FREQ_HZ)
+
+<span class="kw">static</span> JointState_t  joints[NUM_JOINTS];
+<span class="kw">static volatile</span> <span class="kw">bool</span> estop_active = <span class="kw">false</span>;
+
+<span class="cm">/* TIM2 ISR - executes every 20 ms */</span>
+<span class="kw">void</span> <span class="fn">TIM2_IRQHandler</span>(<span class="kw">void</span>) {
+    <span class="kw">if</span> (estop_active) { <span class="fn">servo_disable_all</span>(); <span class="kw">return</span>; }
+    <span class="kw">for</span> (<span class="kw">int</span> i = <span class="nu">0</span>; i &lt; NUM_JOINTS; i++) {
+        joints[i].pos_actual = <span class="fn">encoder_read_deg</span>(i);
+        <span class="kw">float</span> error  = joints[i].pos_target - joints[i].pos_actual;
+        joints[i].integral  += error * DT;
+        <span class="kw">float</span> deriv   = (error - joints[i].prev_error) / DT;
+        <span class="kw">float</span> output  = KP * error + KI * joints[i].integral + KD * deriv;
+        joints[i].prev_error = error;
+        output = <span class="fn">clampf</span>(output, JOINT_MIN[i], JOINT_MAX[i]);
+        <span class="fn">servo_write_pwm</span>(i, <span class="fn">deg_to_pwm</span>(output));
+    }
+    <span class="fn">uart_send_telemetry</span>(joints, NUM_JOINTS);
+    TIM2-&gt;SR &amp;= ~TIM_SR_UIF;
+}
+
+<span class="cm">/* GPIO EXTI - hardware E-stop line */</span>
+<span class="kw">void</span> <span class="fn">EXTI0_IRQHandler</span>(<span class="kw">void</span>) {
+    estop_active = <span class="kw">true</span>;
+    <span class="fn">servo_disable_all</span>();
+    <span class="fn">uart_send_event</span>(EVT_ESTOP_ASSERTED);
+    EXTI-&gt;PR = EXTI_PR_PR0;
+}</pre></div>
+  </section>
+
+  <section class="section" id="kinematics">
+    <h2>Kinematic specification</h2>
+    <p>The arm uses a planar 3R revolute chain. Forward kinematics are computed analytically using the Denavit-Hartenberg convention, giving the end-effector position as a function of the three joint angles &#952;&#8321;, &#952;&#8322;, &#952;&#8323;, corresponding to base, shoulder and elbow.</p>
+    <div class="code-block"><pre><span>Forward kinematics (end-effector XY position)
+   x = L1&#183;cos(&#952;1) + L2&#183;cos(&#952;1+&#952;2) + L3&#183;cos(&#952;1+&#952;2+&#952;3)
+   y = L1&#183;sin(&#952;1) + L2&#183;sin(&#952;1+&#952;2) + L3&#183;sin(&#952;1+&#952;2+&#952;3)</span></pre></div>
+    <table>
+      <thead><tr><th>Joint</th><th>Type</th><th>Link length</th><th>Min angle</th><th>Max angle</th><th>Actuator</th></tr></thead>
+      <tbody>
+        <tr><td>J1 - Base</td><td>Revolute</td><td>120 mm</td><td>&#8722;90&#176;</td><td>+90&#176;</td><td>MG996R (3 kg&#183;cm)</td></tr>
+        <tr><td>J2 - Shoulder</td><td>Revolute</td><td>90 mm</td><td>&#8722;120&#176;</td><td>+120&#176;</td><td>MG996R (3 kg&#183;cm)</td></tr>
+        <tr><td>J3 - Elbow</td><td>Revolute</td><td>60 mm</td><td>&#8722;150&#176;</td><td>+150&#176;</td><td>SG90 (1.8 kg&#183;cm)</td></tr>
+        <tr><td>End-effector</td><td>&#8212;</td><td>&#8212;</td><td colspan="2">Max reach: 270 mm</td><td>2-finger gripper</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+</main>
+<footer><p>Hamish Stuart</p></footer>
+
+<script>
+const LINKS  = [120, 90, 60];
+const LIMITS = [[-90,90],[-120,120],[-150,150]];
+const NAMES  = ['J1 - Base rotate','J2 - Shoulder','J3 - Elbow'];
+
+const SX = 40, SY = 260, SCALE = 0.74;
+const PICK_Y  = 253;
+const HOVER_Y = 203;
+const PLAT_W  = 28;
+
+const platX = { A: 142, B: 175, C: 210 };
+
+const HOME_ANGLES = [0, 0, 0];
+let angles = [0, 45, -30];
+let stopped = false, busy = false;
+let objLocation = 'A';
+
+// ── Analytical IK ──────────────────────────────────────────────────────────
+function rad(d) { return d * Math.PI / 180; }
+function deg(r) { return r * 180 / Math.PI; }
+
+const Lpx = LINKS.map(l => l * SCALE);
+
+function solveIKatPhi(tx, ty, phi_deg) {
+  const phi_r = rad(phi_deg);
+  const wx = tx - Math.cos(phi_r - Math.PI/2) * Lpx[2];
+  const wy = ty - Math.sin(phi_r - Math.PI/2) * Lpx[2];
+  const dx = wx - SX, dy = wy - SY;
+  const r2 = dx*dx + dy*dy;
+  if (r2 > (Lpx[0]+Lpx[1]+0.01)**2) return [];
+  const cos_j2 = (r2 - Lpx[0]*Lpx[0] - Lpx[1]*Lpx[1]) / (2*Lpx[0]*Lpx[1]);
+  if (Math.abs(cos_j2) > 1) return [];
+  const results = [];
+  for (const sign of [1, -1]) {
+    const j2_r = sign * Math.acos(cos_j2);
+    const j2 = deg(j2_r);
+    const k1 = Lpx[0] + Lpx[1]*Math.cos(j2_r), k2 = Lpx[1]*Math.sin(j2_r);
+    const j1 = deg(Math.atan2(dy, dx) - Math.atan2(k2, k1)) + 90;
+    const j3 = phi_deg - j1 - j2;
+    if (j1 < LIMITS[0][0] || j1 > LIMITS[0][1]) continue;
+    if (j2 < LIMITS[1][0] || j2 > LIMITS[1][1]) continue;
+    if (j3 < LIMITS[2][0] || j3 > LIMITS[2][1]) continue;
+    const p = fkPoints([j1,j2,j3]);
+    const ee = p[3];
+    if (Math.sqrt((ee[0]-tx)**2+(ee[1]-ty)**2) > 0.5) continue;
+    results.push({ j1, j2, j3 });
+  }
+  return results;
+}
+
+function computeIK(tx, ty) {
+  let best = null;
+  for (let phi = 90; phi <= 270; phi += 0.5) {
+    for (const r of solveIKatPhi(tx, ty, phi)) {
+      if (r.j1 < 0) continue;
+      const score = Math.abs(r.j2)*0.5 + Math.abs(r.j1)*0.5;
+      if (!best || score < best.score) best = { ...r, score };
+    }
+  }
+  return best;
+}
+
+// ── FK & rendering ─────────────────────────────────────────────────────────
+function fkPoints(a) {
+  let x = SX, y = SY, cum = 0;
+  const pts = [[x, y]];
+  for (let i = 0; i < 3; i++) {
+    cum += a[i];
+    x += Math.cos(rad(cum - 90)) * Lpx[i];
+    y += Math.sin(rad(cum - 90)) * Lpx[i];
+    pts.push([x, y]);
+  }
+  return pts;
+}
+
+function realFK(a) {
+  let x = 0, y = 0, cum = 0;
+  for (let i = 0; i < 3; i++) {
+    cum += a[i];
+    x += Math.cos(rad(cum - 90)) * LINKS[i];
+    y += Math.sin(rad(cum - 90)) * LINKS[i];
+  }
+  return { x: Math.round(x), y: Math.round(-y) };
+}
+
+function clamp(v, i) { return Math.max(LIMITS[i][0], Math.min(LIMITS[i][1], v)); }
+
+function updateViz(carryingCargo) {
+  const pts = fkPoints(angles);
+  ['l1','l2','l3'].forEach((id,i) => {
+    const el = document.getElementById(id);
+    el.setAttribute('x1',pts[i][0]); el.setAttribute('y1',pts[i][1]);
+    el.setAttribute('x2',pts[i+1][0]); el.setAttribute('y2',pts[i+1][1]);
+  });
+  ['j0','j1','j2'].forEach((id,i) => {
+    const c = document.getElementById(id);
+    c.setAttribute('cx',pts[i][0]); c.setAttribute('cy',pts[i][1]);
+  });
+  const [ex, ey] = pts[3];
+  document.getElementById('ee').setAttribute('cx',ex);
+  document.getElementById('ee').setAttribute('cy',ey);
+  const g1=document.getElementById('grip1'), g2=document.getElementById('grip2');
+  g1.setAttribute('x1',ex-5); g1.setAttribute('y1',ey+3); g1.setAttribute('x2',ex-5); g1.setAttribute('y2',ey+13);
+  g2.setAttribute('x1',ex+5); g2.setAttribute('y1',ey+3); g2.setAttribute('x2',ex+5); g2.setAttribute('y2',ey+13);
+  const cargo = document.getElementById('cargo');
+  if (carryingCargo) {
+    cargo.setAttribute('x', ex-5); cargo.setAttribute('y', ey+3); cargo.setAttribute('opacity','1');
+  } else {
+    cargo.setAttribute('opacity','0');
+  }
+  const rp = realFK(angles);
+  document.getElementById('sx').textContent = rp.x;
+  document.getElementById('sy').textContent = rp.y;
+  const maxR = LINKS.reduce((a,b)=>a+b,0);
+  document.getElementById('sr').textContent = Math.round(Math.sqrt(rp.x**2+rp.y**2)/maxR*100);
+  const lbl = document.getElementById('ee-label');
+  lbl.setAttribute('x',ex+7); lbl.setAttribute('y',ey-6);
+  lbl.textContent = '('+rp.x+', '+rp.y+')';
+  const over = Math.abs(angles[1])>100||Math.abs(angles[2])>75;
+  const tb = document.getElementById('tlim');
+  tb.textContent = over?'Warning':'OK'; tb.className='badge'+(over?' warn':' ok');
+}
+
+function setObjVisibility() {
+  ['A','B','C'].forEach(p => {
+    document.getElementById('obj'+p).setAttribute('opacity', objLocation===p?'1':'0');
+  });
+}
+
+// ── Platform geometry ──────────────────────────────────────────────────────
+function updatePlatformSVG(key) {
+  const cx = platX[key];
+  ['plat'+key+'bar','plat'+key+'shelf'].forEach(id => {
+    document.getElementById(id).setAttribute('x', cx - PLAT_W/2);
+    document.getElementById(id).setAttribute('width', PLAT_W);
+  });
+  document.getElementById('plat'+key+'lbl').setAttribute('x', cx);
+  document.getElementById('obj'+key).setAttribute('x', cx - 5);
+}
+
+function updateAllPlatforms() { ['A','B','C'].forEach(k => updatePlatformSVG(k)); }
+
+function svgXtoMM(svgX) { return Math.round((svgX - SX) / SCALE); }
+
+function initPlatformSliders() {
+  ['A','B','C'].forEach(key => {
+    const slider = document.getElementById('slP'+key);
+    const mmLabel = document.getElementById('mm'+key);
+    mmLabel.textContent = svgXtoMM(platX[key])+'mm';
+    slider.value = platX[key];
+    slider.addEventListener('input', e => {
+      if (busy) return;
+      platX[key] = parseInt(e.target.value);
+      mmLabel.textContent = svgXtoMM(platX[key])+'mm';
+      updatePlatformSVG(key);
+    });
+  });
+}
+
+// ── Joint sliders ──────────────────────────────────────────────────────────
+function buildJoints() {
+  const c = document.getElementById('joints-container'); c.innerHTML='';
+  NAMES.forEach((name,i) => {
+    const d = document.createElement('div'); d.className='joint-row';
+    d.innerHTML='<div class="jh"><span class="jname">'+name+'</span><span class="jval" id="av'+i+'">'+angles[i]+'°</span></div>'
+      +'<input type="range" min="'+LIMITS[i][0]+'" max="'+LIMITS[i][1]+'" value="'+angles[i]+'" step="1" id="sl'+i+'">';
+    c.appendChild(d);
+    document.getElementById('sl'+i).addEventListener('input', e => {
+      if (stopped||busy) return;
+      angles[i]=parseInt(e.target.value);
+      document.getElementById('av'+i).textContent=angles[i]+'°';
+      updateViz(false);
+      appendLog('[FW] joint_write(J'+(i+1)+', '+angles[i]+')');
+    });
+  });
+}
+
+function setSliders() {
+  for(let i=0;i<3;i++){
+    const sl=document.getElementById('sl'+i);
+    if(sl){sl.value=angles[i];document.getElementById('av'+i).textContent=angles[i]+'°';}
+  }
+}
+
+// ── Logging ────────────────────────────────────────────────────────────────
+function appendLog(msg, cls) {
+  const log=document.getElementById('log');
+  const p=document.createElement('p'); if(cls)p.className=cls;
+  const ts=new Date().toLocaleTimeString('en-AU',{hour12:false});
+  p.textContent='['+ts+'] '+msg; log.appendChild(p);
+  if(log.children.length>80)log.removeChild(log.firstChild);
+  log.scrollTop=log.scrollHeight;
+}
+
+// ── Animation ──────────────────────────────────────────────────────────────
+function sleep(ms){return new Promise(r=>setTimeout(r,ms));}
+
+async function animateTo(targetAngles, carrying, steps=40) {
+  const start=[...angles];
+  const target=targetAngles.map((t,i)=>clamp(t,i));
+  for(let s=0;s<=steps;s++){
+    if(stopped)return;
+    for(let i=0;i<3;i++) angles[i]=Math.round(start[i]+(target[i]-start[i])*s/steps);
+    setSliders(); updateViz(carrying);
+    await sleep(14);
+  }
+  angles=[...target]; setSliders(); updateViz(carrying);
+}
+
+// ── Controls ───────────────────────────────────────────────────────────────
+function runHome() {
+  if(stopped||busy)return;
+  angles=[...HOME_ANGLES]; setSliders(); updateViz(false);
+  appendLog('[FW] motion_goto_home() — all joints zeroed');
+}
+
+function triggerEstop() {
+  stopped=!stopped;
+  const b=document.getElementById('estop');
+  b.textContent=stopped?'ACTIVE':'Inactive';
+  b.className='badge'+(stopped?' warn':' ok');
+  appendLog(stopped?'[FW] E-STOP asserted — drives disabled':'[FW] E-STOP cleared', stopped?'warn':null);
+  document.getElementById('btnRun').disabled=stopped;
+}
+
+async function runPickPlace() {
+  if(busy||stopped) return;
+  const from=document.getElementById('selFrom').value;
+  const to  =document.getElementById('selTo').value;
+  if(from===to){appendLog('[SW] ERROR: source and destination are the same','warn');return;}
+  if(objLocation!==from){appendLog('[SW] ERROR: no object at platform '+from+' (object is at '+objLocation+')','warn');return;}
+
+  const srcX=platX[from], dstX=platX[to];
+  const srcPick =computeIK(srcX, PICK_Y);
+  const srcHover=computeIK(srcX, HOVER_Y);
+  const dstPick =computeIK(dstX, PICK_Y);
+  const dstHover=computeIK(dstX, HOVER_Y);
+
+  if(!srcPick||!srcHover){appendLog('[SW] ERROR: platform '+from+' out of reach','warn');return;}
+  if(!dstPick||!dstHover){appendLog('[SW] ERROR: platform '+to+' out of reach','warn');return;}
+
+  busy=true;
+  document.getElementById('btnRun').disabled=true;
+  appendLog('[SW] pick_and_place('+from+' -> '+to+') initiated');
+  appendLog('[IK] J_pick_src=['+[srcPick.j1,srcPick.j2,srcPick.j3].map(v=>Math.round(v)).join(',')+']');
+  appendLog('[IK] J_pick_dst=['+[dstPick.j1,dstPick.j2,dstPick.j3].map(v=>Math.round(v)).join(',')+']');
+
+  appendLog('[FW] moving to hover above platform '+from);
+  await animateTo([srcHover.j1,srcHover.j2,srcHover.j3], false);
+  await sleep(180);
+
+  appendLog('[FW] descending to pick point on platform '+from);
+  await animateTo([srcPick.j1,srcPick.j2,srcPick.j3], false, 25);
+  await sleep(280);
+
+  appendLog('[FW] gripper_close() - object acquired at platform '+from);
+  document.getElementById('obj'+from).setAttribute('opacity','0');
+  document.getElementById('cargo').setAttribute('opacity','1');
+  await sleep(220);
+
+  appendLog('[FW] ascending with payload');
+  await animateTo([srcHover.j1,srcHover.j2,srcHover.j3], true);
+  await sleep(180);
+
+  appendLog('[FW] traversing to platform '+to);
+  await animateTo([dstHover.j1,dstHover.j2,dstHover.j3], true);
+  await sleep(180);
+
+  appendLog('[FW] descending to drop point on platform '+to);
+  await animateTo([dstPick.j1,dstPick.j2,dstPick.j3], true, 25);
+  await sleep(280);
+
+  appendLog('[FW] gripper_open() - object released at platform '+to);
+  objLocation=to;
+  setObjVisibility();
+  document.getElementById('cargo').setAttribute('opacity','0');
+  await sleep(220);
+
+  appendLog('[FW] ascending clear of platform '+to);
+  await animateTo([dstHover.j1,dstHover.j2,dstHover.j3], false);
+  await sleep(180);
+
+  appendLog('[FW] returning to home position');
+  await animateTo(HOME_ANGLES, false);
+
+  appendLog('[SW] transfer complete - object now at platform '+to);
+  busy=false;
+  document.getElementById('btnRun').disabled=false;
+}
+
+// ── Init ───────────────────────────────────────────────────────────────────
+buildJoints();
+initPlatformSliders();
+updateAllPlatforms();
+updateViz(false);
+setObjVisibility();
+appendLog('[FW] 3-DOF arm detected, joint limits loaded');
+appendLog('[SW] WPF host connected on COM3 @ 115200 baud');
+appendLog('[SW] Platforms A, B, C registered - object initialised at A');
+</script>
+</body>
+</html>

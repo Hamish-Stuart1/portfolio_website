@@ -1,0 +1,253 @@
+/* =====================================================================
+   COLOUR PALETTE — change colours here and they update everywhere
+   (main.html and every project page that links this stylesheet)
+   ===================================================================== */
+:root {
+  /* page */
+  --bg:              #000;      /* page + header background            */
+  --text:            #b6b6b6;   /* body text                            */
+  --heading:         #fff;      /* headings, logo, hero text            */
+  --accent:          #44c538;   /* highlight colour (hover, links)      */
+  --muted:           #888;      /* small secondary text                 */
+  --faint:           #bbb;      /* footer text                          */
+
+  /* lines */
+  --border:          #b6b6b6;   /* header line, card outlines, tags     */
+  --divider:         #fff;      /* hero + section underlines            */
+  --footer-border:   #333;      /* line above footer                    */
+
+  /* cards */
+  --card-bg:         #000;
+  --card-label-bg:   rgba(0, 0, 0, 0.82);
+  --card-label-text: #fff;
+  --card-hover-tint: rgba(68, 197, 56, 0.06);
+  --card-hover-glow: rgba(68, 197, 56, 0.25);
+  --placeholder-bg:  #0a0a0a;
+  --placeholder-line:#111;
+  --placeholder-num: #222;
+
+  /* status dots */
+  --status-wip:      #f5844c;
+  --status-future:   #444;
+
+  /* scrollbar */
+  --scroll-track:    #111;
+  --scroll-thumb:    #444;
+
+  /* robot arm thumbnail (SVG) */
+  --svg-grid:        #59ff4a;
+  --arm-1:           red;
+  --arm-2:           green;
+  --arm-3:           blue;
+  --arm-tool:        orange;
+  --arm-cargo:       yellow;
+
+  /* fonts */
+  --font: 'Inter', system-ui, -apple-system, sans-serif;
+  --mono: 'JetBrains Mono', 'Fira Code', monospace;
+}
+
+/* =====================================================================
+   BASE
+   ===================================================================== */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+body {
+  background: var(--bg); color: var(--text);
+  font-family: var(--font); font-size: 15px; line-height: 1.6;
+}
+a:focus-visible, button:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+
+/* ── header ── */
+header {
+  border-bottom: 1.5px solid var(--border);
+  padding: 0 40px; height: 56px;
+  display: flex; align-items: center; justify-content: space-between;
+  position: sticky; top: 0; z-index: 10; background: var(--bg);
+}
+.logo,
+nav a {
+  font-family: var(--mono); font-size: 13px; font-weight: 600;
+  letter-spacing: .12em; text-transform: uppercase;
+  color: var(--heading); text-decoration: none; transition: color .15s;
+}
+nav { display: flex; gap: 28px; }
+.logo:hover, nav a:hover { color: var(--accent); }
+
+/* ── hero ── */
+.hero { padding: 80px 40px 64px; border-bottom: 1px solid var(--divider); }
+.hero h1 {
+  font-size: clamp(28px, 6vw, 50px);
+  font-weight: 700; letter-spacing: -.03em; line-height: 1.05;
+  color: var(--heading); margin-bottom: 20px;
+}
+.hero-sub { font-size: 16px; color: var(--heading); max-width: 200ch; line-height: 1.65; }
+
+/* ── main content ── */
+.content { max-width: 1100px; margin: 0 auto; padding: 0 40px 80px; }
+
+/* ── section ── */
+.proj-section { padding-top: 56px; }
+.section-header {
+  display: flex; align-items: center; justify-content: space-between; gap: 16px;
+  margin-bottom: 28px; padding-bottom: 14px;
+  border-bottom: 1px solid var(--divider);
+}
+.section-title {
+  font-family: var(--mono); font-size: 11px; font-weight: 600;
+  letter-spacing: .14em; text-transform: uppercase; color: var(--heading);
+}
+
+/* scroll arrows */
+.scroll-btns { display: flex; gap: 8px; }
+.scroll-btns button {
+  width: 30px; height: 30px; cursor: pointer;
+  background: none; border: 1px solid var(--border); color: var(--text);
+  font-family: var(--mono); font-size: 14px; line-height: 1;
+  transition: border-color .15s, color .15s;
+}
+.scroll-btns button:hover { border-color: var(--accent); color: var(--accent); }
+
+/* ── horizontal card row ── */
+.proj-row {
+  --gap: 16px;
+  --per-view: 3;                    /* cards visible at once */
+  display: flex; gap: var(--gap);
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  scroll-behavior: smooth;
+  padding: 6px 0 14px;              /* room for hover lift + scrollbar */
+  scrollbar-width: thin;
+  scrollbar-color: var(--scroll-thumb) var(--scroll-track);
+}
+.proj-row::-webkit-scrollbar { height: 6px; }
+.proj-row::-webkit-scrollbar-track { background: var(--scroll-track); }
+.proj-row::-webkit-scrollbar-thumb { background: var(--scroll-thumb); }
+
+/* ── project card ── */
+.proj-card {
+  flex: 0 0 calc((100% - (var(--per-view) - 1) * var(--gap)) / var(--per-view));
+  scroll-snap-align: start;
+  position: relative; overflow: hidden; display: block;
+  aspect-ratio: 1 / 1;
+  border: 1px solid var(--border); background: var(--card-bg);
+  text-decoration: none;
+  transition: transform .18s ease, box-shadow .18s ease;
+}
+.proj-card:hover { transform: translateY(-3px); box-shadow: 0 8px 24px var(--card-hover-glow); }
+.proj-card:hover .card-overlay { opacity: 1; }
+.proj-card:hover .card-label { background: var(--accent); color: var(--bg); }
+.proj-card:hover .card-label-sub { color: var(--bg); }
+
+.card-thumb {
+  position: absolute; inset: 0;
+  display: flex; align-items: center; justify-content: center;
+}
+.card-thumb svg { width: 100%; height: 100%; }
+
+.card-thumb.placeholder { background: var(--placeholder-bg); }
+.card-thumb.placeholder::before {
+  content: ''; position: absolute; inset: 0;
+  background-image: repeating-linear-gradient(
+    45deg, var(--placeholder-line) 0 1px, transparent 1px 12px);
+}
+.placeholder-icon {
+  position: relative; z-index: 1; user-select: none;
+  font-family: var(--mono); font-size: 28px; color: var(--placeholder-num);
+}
+
+.card-overlay {
+  position: absolute; inset: 0; pointer-events: none;
+  background: var(--card-hover-tint); opacity: 0; transition: opacity .18s;
+}
+
+.card-label {
+  position: absolute; bottom: 0; left: 0; right: 0;
+  padding: 10px 14px;
+  display: flex; justify-content: space-between; align-items: center; gap: 8px;
+  background: var(--card-label-bg); backdrop-filter: blur(4px);
+  font-size: 12px; font-weight: 600; letter-spacing: .04em; color: var(--card-label-text);
+  transition: background .18s, color .18s;
+}
+.card-label-sub {
+  font-family: var(--mono); font-size: 9px; font-weight: 400;
+  letter-spacing: .08em; text-transform: uppercase; color: var(--muted);
+  transition: color .18s;
+}
+
+.status-dot {
+  width: 6px; height: 6px; border-radius: 50%;
+  display: inline-block; margin-right: 6px;
+}
+.status-dot.wip    { background: var(--status-wip); box-shadow: 0 0 6px var(--status-wip); }
+.status-dot.future { background: var(--status-future); }
+
+/* robot arm SVG colours (pulled from the palette above) */
+.svg-grid  { stroke: var(--svg-grid); }
+.svg-title { fill: var(--svg-grid); }
+.arm-1 { stroke: var(--arm-1); fill: var(--arm-1); }
+.arm-2 { stroke: var(--arm-2); fill: var(--arm-2); }
+.arm-3 { stroke: var(--arm-3); fill: var(--arm-3); }
+.arm-tool  { stroke: var(--arm-tool); fill: var(--arm-tool); }
+.arm-cargo { fill: var(--arm-cargo); }
+
+/* =====================================================================
+   PROJECT PAGE (project.html)
+   ===================================================================== */
+.back-link {
+  display: inline-block; margin-bottom: 24px;
+  font-family: var(--mono); font-size: 11px; letter-spacing: .1em;
+  text-transform: uppercase; color: var(--text); text-decoration: none;
+}
+.back-link:hover { color: var(--accent); }
+
+.project-meta {
+  display: flex; flex-wrap: wrap; gap: 8px 28px; margin-top: 24px;
+  font-family: var(--mono); font-size: 11px; letter-spacing: .06em; color: var(--text);
+}
+.project-meta strong { color: var(--heading); font-weight: 600; margin-right: 6px; }
+
+.project-body { max-width: 100ch; }
+.project-body p, .project-body ul { margin-bottom: 16px; }
+.project-body ul { padding-left: 20px; }
+.project-body a { color: var(--accent); }
+
+.media-placeholder {
+  position: relative; aspect-ratio: 16 / 9; margin: 8px 0 24px;
+  border: 1px solid var(--border); background: var(--placeholder-bg);
+  display: flex; align-items: center; justify-content: center;
+  font-family: var(--mono); font-size: 12px; color: var(--muted);
+}
+.media-placeholder::before {
+  content: ''; position: absolute; inset: 0;
+  background-image: repeating-linear-gradient(
+    45deg, var(--placeholder-line) 0 1px, transparent 1px 12px);
+}
+.media-placeholder span { position: relative; }
+.project-body img { display: block; max-width: 100%; border: 1px solid var(--border); margin: 8px 0 24px; }
+
+/* ── footer ── */
+footer {
+  border-top: 1px solid var(--footer-border); padding: 24px 40px;
+  display: flex; justify-content: space-between; align-items: center;
+  font-family: var(--mono); font-size: 11px; letter-spacing: .06em; color: var(--faint);
+}
+
+/* =====================================================================
+   RESPONSIVE
+   ===================================================================== */
+@media (max-width: 700px) {
+  header, .hero, .content, footer { padding-left: 20px; padding-right: 20px; }
+  nav { gap: 14px; }
+  .logo, nav a { font-size: 11px; }
+  .proj-row { --per-view: 2; }
+}
+@media (max-width: 480px) {
+  header { height: auto; padding-top: 12px; padding-bottom: 12px; flex-direction: column; gap: 8px; }
+  .proj-row { --per-view: 1.2; }   /* shows a sliver of the next card as a scroll hint */
+  .scroll-btns { display: none; }  /* swipe on phones */
+}
+@media (prefers-reduced-motion: reduce) {
+  html, .proj-row { scroll-behavior: auto; }
+  .proj-card { transition: none; }
+}
