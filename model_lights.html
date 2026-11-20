@@ -17,9 +17,11 @@
 
   <h1>MODEL AIRCRAFT LIGHTING CONTROLLER</h1>
 
-  <p class="hero-sub">A 28 &times; 20&nbsp;mm board that gives 1/72&ndash;1/35 scale model aircraft working
-    navigation strobes, a beacon, taxi and cabin lights, with adjustable brightness and flash timing
-    and no microcontroller.</p>
+  <p class="hero-sub">This personal project was completed to solve the problem of needing a bulky microcontroller unit to
+    add realistic lights to a scale model aircraft.  The PCB is designed to have low power consumption and fit within
+    the fuselage of larger scales like 1/35 and 1/48 scale or fit within a small baseplate for 1/72 and 1/144 scale models.
+    This PCB is simply a customizable and togleable driver of 0402 LEDs, such that these LEDs can be internally fitted to scale models.
+  </p>
 
   <div class="project-meta">
     <span><strong>Status</strong>Rev 1.0 designed, not yet built</span>
@@ -31,19 +33,41 @@
 
 <main class="content">
 
-  <section class="proj-section">
-    <div class="section-header"><h2 class="section-title">The problem</h2></div>
+  <section class="proj-section" id="introduction">
+    <div class="section-header"><h2 class="section-title">Project introduction</h2></div>
     <div class="project-body">
-      <p>Real aircraft carry several light groups that behave differently: red and green navigation lights,
-        white wingtip strobes, a beacon, taxi lights and cabin lighting. Reproducing that in a plastic kit
-        means driving ten 0402 LEDs (1.0 &times; 0.5&nbsp;mm) from a board small enough to hide in a fuselage or display base.</p>
-      <p>The brief: switch each light group independently, dim everything from one control, and adjust both how
+      <p>Real aircraft carry several light groups that behave differently such as navigation lights,
+        wingtip strobes, a beacon, taxi lights and cabin lighting. Reproducing that in a plastic kit
+        means driving ten 0402 LEDs (1.0 &times; 0.5&nbsp;mm) from a board small enough to hide in a fuselage or display base.
+      The lights driven by this board are designed according to this image.</p>
+      <img class="img-center" src="lights_diagram.jpg" width="400" alt="Top side of the 28 x 20 mm lighting controller PCB">
+      <p>Based on these requirements, the goal is to achieve functionality that allows switching of each light group independently, dimming of everything from one control, and adjustment of both how
         often the strobes fire and how long each flash lasts.</p>
+      <img class="img-center" src="lights2.JPG" width="400" alt="Top side of the 28 x 20 mm lighting controller PCB">
     </div>
   </section>
 
-  <section class="proj-section">
-    <div class="section-header"><h2 class="section-title">How it works</h2></div>
+  <section class="proj-section" id="design-choices">
+    <div class="section-header"><h2 class="section-title">Major design choices</h2></div>
+    <div class="project-body">
+      <ul class="key-results">
+        <li><strong>Analog timer.</strong> A TLC556 needs no firmware and is adjusted
+          with a screwdriver. The CMOS version draws far less current than the classic NE556 with the same pinout.
+          This choice sacrifices programmable patterns such as double-flash strobes, however this is noted for future revisions.</li>
+        <li><strong>PWM dimming.</strong> One transistor switching every LED on and off dims the whole board from a
+          single trimmer, and keeps LED colours consistent where a resistor-based dimmer would shift them.</li>
+        <li><strong>Trimmers and a DIP switch.</strong> Small surface-mount parts instead of panel pots and toggles keep the
+          board at desirabley small. Settings are made once before the board is hidden in the model.</li>
+        <li><strong>A resistor and pin pair for every LED.</strong> Each LED gets its own current and can be replaced
+          on its own, at the cost of 20 wires through the airframe.</li>
+        <li><strong>5V power supply.</strong> A battery fitting inside the model remains unrealistic for a product that can be adaptable to a range of models.
+          The board takes 5V from 3 x AAA or USB in the base.</li>
+      </ul>
+    </div>
+  </section>
+
+  <section class="proj-section" id="design">
+    <div class="section-header"><h2 class="section-title">Design</h2></div>
     <div class="project-body">
       <div class="diagram-wrap">
         <svg class="diagram" viewBox="0 0 900 330" role="img"
@@ -54,7 +78,6 @@
             </marker>
           </defs>
 
-          <!-- top row: power → switch → LEDs -->
           <rect class="dg-box" x="20"  y="30" width="200" height="70"/>
           <text class="dg-title" x="36" y="60">POWER IN</text>
           <text class="dg-sub"   x="36" y="82">5 V, reverse-polarity diode</text>
@@ -72,13 +95,11 @@
           <path class="dg-line" d="M480,65 H538" marker-end="url(#dg-arrow)"/>
           <text class="dg-label" x="510" y="56" text-anchor="middle">4 rails</text>
 
-          <!-- LED returns down to the switches -->
           <path class="dg-line" d="M620,100 V168" marker-end="url(#dg-arrow)"/>
           <text class="dg-label" x="628" y="140">strobe LEDs</text>
           <path class="dg-line" d="M810,100 V238" marker-end="url(#dg-arrow)"/>
           <text class="dg-label" x="802" y="140" text-anchor="end">steady LEDs</text>
 
-          <!-- low-side switches -->
           <rect class="dg-box" x="540" y="170" width="160" height="55"/>
           <text class="dg-title" x="556" y="194">Q2 STROBE</text>
           <text class="dg-sub"   x="556" y="213">LEDs 1, 2, 4, 5</text>
@@ -92,7 +113,6 @@
           <path class="dg-rule" d="M790,320 H820"/>
           <text class="dg-label" x="828" y="324">GND</text>
 
-          <!-- dual timer -->
           <rect class="dg-group" x="10" y="150" width="360" height="160"/>
           <text class="dg-label" x="20" y="142">TLC556 dual CMOS timer</text>
 
@@ -112,16 +132,14 @@
       </div>
 
       <ul>
-        <li><strong>One chip, two jobs:</strong> a TLC556 dual CMOS timer runs both functions. Unit A is an astable
-          oscillator with a steering diode, so flash length (charge path) and time between flashes (discharge path)
-          are set by separate trimmers instead of being tied together.</li>
-        <li><strong>Brightness by PWM, not resistance:</strong> unit B generates a ~650&nbsp;Hz square wave whose duty
-          cycle is set by one trimmer with steering diodes, keeping the frequency roughly constant across the range.
-          Dimming the whole board from a single low-side transistor keeps every LED's colour consistent.</li>
+        <li><strong>Single timing chip:</strong> unit A of the timer is an astable oscillator with a steering diode, so
+          flash length and time between flashes are set by separate trimmers instead of being tied together.</li>
+        <li><strong>Constant-frequency PWM:</strong> unit B&rsquo;s duty cycle is set by one trimmer with steering diodes,
+          keeping the frequency near 650&nbsp;Hz across the whole brightness range.</li>
         <li><strong>Stacked switches:</strong> strobe LEDs return through Q2 and then Q1, so they only light when a flash
-          pulse <em>and</em> the PWM are both high. The brightness setting therefore applies to the strobes too.</li>
-        <li><strong>Switching on the high side:</strong> the DIP switch feeds each group's anode rail, so turning a group
-          off removes its supply without disturbing the timing circuitry.</li>
+          pulse and the PWM are both high. The brightness setting applies to the strobes too.</li>
+        <li><strong>High-side group switching:</strong> the DIP switch feeds each group&rsquo;s supply rail, so turning a
+          group off never disturbs the timing circuitry.</li>
       </ul>
 
       <div class="table-wrap">
@@ -141,32 +159,36 @@
     </div>
   </section>
 
-  <section class="proj-section">
-    <div class="section-header"><h2 class="section-title">The board</h2></div>
+  <section class="proj-section" id="results">
+    <div class="section-header"><h2 class="section-title">Results</h2></div>
     <div class="project-body">
-           <img class="img-center" src="lights2.JPG" width="400" alt="Top side of the 28 x 20 mm lighting controller PCB">
-
+      <p>The board hasn't been built yet, results as of yet are purely from falstad simulations.</p>
       <ul class="key-results">
-        <li><strong>28 &times; 20 &times; 1.0&nbsp;mm,</strong> two layers, 34 parts, with every SMD part on the top side.</li>
-        <li><strong>Clean checks:</strong> KiCad DRC with 0 errors and 0 unconnected pads, and a pad-by-pad comparison
-          of the PCB against the schematic netlist with 0 mismatches.</li>
-        <li><strong>Pin order chosen for size:</strong> the LED connector groups the strobing LEDs together, so pads on
-          the same net sit side by side and connect directly, which saved routing space.</li>
-        <li><strong>Hard to wire wrong:</strong> a Schottky diode makes a reversed 2-wire supply harmless, and
-          control functions and LED numbers are printed on the silkscreen.</li>
-        <li><strong>About 45&nbsp;mA</strong> with everything on at full brightness.</li>
+        <li><strong>Falstad simulation results:</strong> strobe timing and PWM dimming were demonstrated in Falstad
+          before PCB design, the PCB schematic replicates this working model.
+         <img class="img-center" src="fal1.JPG" width="400" alt="Top side of the 28 x 20 mm lighting controller PCB">
+        </li>
+        <li><strong>Clean board checks:</strong> KiCad DRC with 0 errors and 0 unconnected pads, and a pad-by-pad
+          comparison of the PCB against the schematic with 0 mismatches.</li>
+        <li><strong>Board size:</strong> PCB design is two layers, 34 parts, with every surface-mount part on one side, resulting in a size of 28mm x 20mm.</li>
+        <li><strong>Power consumption</strong> With all LEDs on at full brightness the device is expected to consume 45 mA, roughly 20 hours on 3 x AAA.</li>
       </ul>
     </div>
   </section>
 
-  <section class="proj-section">
-    <div class="section-header"><h2 class="section-title">What I learned</h2></div>
+  <section class="proj-section" id="future-developments">
+    <div class="section-header"><h2 class="section-title">Future developments</h2></div>
     <div class="project-body">
-      <p>Prototyping in Falstad first caught real wiring mistakes before any layout, but it also taught me to question
-        the simulator. The steady interior lights appeared to flash on the scope; that turned out to be the slow scope
-        sampling the 650&nbsp;Hz PWM and aliasing it into a false pattern, not a circuit fault.</p>
-      <p>Next steps are a breadboard check, then rev 1.1: a polarised JST-PH battery connector and a 2&nbsp;&times;&nbsp;6
-        LED header with shared cathode returns, cutting the wires through a 1/72 fuselage from 20 to 12.</p>
+      <ul class="key-results">
+        <li><strong>Smaller components</strong> This initial revision is done as a cheap proof
+          of concept, and can likely be made much smaller, while at a higher cost.</li>
+        <li><strong>Shared cathode returns.</strong> A 2 x 6 LED header reduces the wires through the
+          fuselage from 20 to 12, however will mean a wire harness is required.</li>
+        <li><strong>On-board boost converter.</strong> Would allow a single LiPo cell inside a larger kit power the board.
+          Only necessary if the battery must fit in the model rather than the base.</li>
+        <li><strong>Additional LEDs.</strong> A circuit to flicker and pulse orange or red LEDs would likely be effective
+          at simulating jet engine visuals, or possibly even early piston engine exhuast, however this would require a larger board and more components.</li>
+      </ul>
     </div>
   </section>
 
