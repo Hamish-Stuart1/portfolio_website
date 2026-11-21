@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>War Thunder Flight Data Logger — Hamish Stuart</title>
+<link rel="stylesheet" href="styles.css"/>
+</head>
+<body>
+
+<header>
+  <a class="logo" href="index.html">Professional portfolio</a>
+</header>
+
+<div class="hero">
+  <a class="back-link" href="index.html">&larr; Back to portfolio</a>
+
+  <h1>WAR THUNDER FLIGHT DATA LOGGER</h1>
+
+  <p class="hero-sub">As a precursor to the Blackbox project (and other related aerospace themed projects), this project is completed
+    as a source of semi-acurate (but plentiful) flight data.  The popular videogame warthunder has a range of airframes spanning from pre ww2 to modern aviation, and is able to simulate various environmental conditions.
+    Conveniently, warthunder publishes live flight data to a local web server for the purpose of a browser map that die hard players use on a second monitor for navigation.  Using this local web server,
+    a data scraper script is made to harvest this data for analysis and research for projects like the Blackbox recorder, and live flight readings for future UAV projects.</p>
+
+  <div class="project-meta">
+    <span><strong>Status</strong>Completed</span>
+    <span><strong>Type</strong>Personal project</span>
+    <span><strong>Tools</strong>MATLAB</span>
+  </div>
+</div>
+
+<main class="content">
+
+  <section class="proj-section" id="introduction">
+    <div class="section-header"><h2 class="section-title">Project introduction</h2></div>
+    <div class="project-body">
+      <p>While a flight is running, War Thunder publishes the aircrafts state on a local web server for its
+        browser map. The logger reads that data many times a second, collecting altitude, attitude, heading and
+        airspeed into a table, and saves it as a CSV when the pilot presses stop.</p>
+<img class="img-center" src="wt_data1.png" width="400" alt="Top side of the 28 x 20 mm lighting controller PCB">
+
+
+      <p>See <a href="">this project</a> for what i used this data for.</p>
+    </div>
+  </section>
+
+  <section class="proj-section" id="design-choices">
+    <div class="section-header"><h2 class="section-title">Major design choices</h2></div>
+    <div class="project-body">
+      <ul class="key-results">
+        <li><strong>The games own local API.</strong> Port 8111 is a read-only server built into the game.
+          Reading it needs no memory hacking or screen capture, so it is reliable and doesnt touch the game itself.</li>
+        <li><strong>MATLAB end to end.</strong> webread turns the JSON replies straight into structures.  This is a relatively simple project so not much complexity is required</li>
+        <li><strong>Sampling rate:</strong> There is no fixed rate of updates for the local web server, and little information on tick speed could be found through online forums. Each sample
+          Because of this, each sample carries its own clock time, so uneven spacing is handled in analysis instead of throwing samples away.</li>
+        <li><strong>Error samples:</strong> If a request fails or a value is missing (paused game,
+          menus), the sample is skipped, so every column stays aligned in time.</li>
+        <li><strong>Purpose built stop button.</strong> Typically a shortcut such as Ctrl+C is used to terminate a hypothetically infinitely running script, however i added a special built button instead as this shortcut would end the script before saving. The button
+          ends the loop cleanly, so the table and CSV are always written.</li>
+      </ul>
+    </div>
+  </section>
+
+  <section class="proj-section" id="design">
+    <div class="section-header"><h2 class="section-title">Design</h2></div>
+    <div class="project-body">
+      <div class="diagram-wrap">
+        <svg class="diagram" viewBox="0 0 900 210" role="img"
+             aria-label="Data flow: War Thunder serves state and indicators on localhost port 8111. The MATLAB logging loop reads both, timestamps and stores the values until Stop is pressed, then saves a table to CSV, which the flight path reconstruction script reads.">
+          <defs>
+            <marker id="dg-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+              <path class="dg-head" d="M0,0 L10,5 L0,10 Z"/>
+            </marker>
+          </defs>
+
+          <rect class="dg-box" x="20" y="30" width="200" height="160"/>
+          <text class="dg-title" x="36" y="60">WAR THUNDER</text>
+          <text class="dg-sub"   x="36" y="80">localhost:8111</text>
+          <text class="dg-label" x="36" y="110">/state</text>
+          <text class="dg-sub"   x="36" y="128">altitude, airspeed</text>
+          <text class="dg-label" x="36" y="156">/indicators</text>
+          <text class="dg-sub"   x="36" y="174">attitude, compass</text>
+
+          <rect class="dg-box" x="300" y="30" width="250" height="160"/>
+          <text class="dg-title" x="316" y="60">LOGGING LOOP</text>
+          <text class="dg-sub"   x="316" y="92">1. Read both endpoints</text>
+          <text class="dg-sub"   x="316" y="116">2. Timestamp the sample</text>
+          <text class="dg-sub"   x="316" y="140">3. Append 8 values</text>
+          <text class="dg-sub"   x="316" y="164">4. Repeat until Stop</text>
+
+          <rect class="dg-box" x="630" y="30" width="250" height="65"/>
+          <text class="dg-title" x="646" y="58">TABLE &#8594; CSV</text>
+          <text class="dg-sub"   x="646" y="79">One row per sample</text>
+
+          <rect class="dg-box" x="630" y="125" width="250" height="65"/>
+          <text class="dg-title" x="646" y="153">FLIGHT PATH</text>
+          <text class="dg-sub"   x="646" y="174">Reconstruction script</text>
+
+          <path class="dg-line" d="M220,110 H298" marker-end="url(#dg-arrow)"/>
+          <text class="dg-label" x="259" y="101" text-anchor="middle">JSON</text>
+          <path class="dg-line" d="M550,62 H628" marker-end="url(#dg-arrow)"/>
+          <text class="dg-label" x="589" y="53" text-anchor="middle">Stop</text>
+          <path class="dg-line" d="M755,95 V123" marker-end="url(#dg-arrow)"/>
+        </svg>
+      </div>
+
+      <div class="table-wrap">
+        <table class="data-table">
+          <thead><tr><th>Column</th><th>Source</th><th>Units</th></tr></thead>
+          <tbody>
+            <tr><td>time</td><td>System clock</td><td>s (Unix time)</td></tr>
+            <tr><td>alt</td><td>/state &ndash; H</td><td>m</td></tr>
+            <tr><td>speed</td><td>/state &ndash; TAS</td><td>km/h</td></tr>
+            <tr><td>roll</td><td>/indicators &ndash; aviahorizon_roll</td><td>deg</td></tr>
+            <tr><td>pitch</td><td>/indicators &ndash; aviahorizon_pitch</td><td>deg</td></tr>
+            <tr><td>yaw</td><td>/indicators &ndash; compass</td><td>deg</td></tr>
+            <tr><td>AOA, AOS</td><td>Angle of attack and sideslip</td><td>deg</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <ul>
+        <li><strong>Two endpoints, two kinds of data:</strong> <code>/state</code> holds flight-model values such as
+          altitude and true airspeed, while <code>/indicators</code> holds what the cockpit instruments show, such as
+          the artificial horizon and compass.</li>
+        <li><strong>Readable field names:</strong> the game&rsquo;s JSON keys include units, like <code>"H, m"</code>.
+          MATLAB converts them into valid field names (<code>H_M</code>, <code>TAS_Km_h</code>), which the script reads directly.</li>
+        <li><strong>Easy to extend:</strong> each channel is one read and one log array, so adding a value such as
+          vertical speed or g-load is two lines.</li>
+      </ul>
+    </div>
+  </section>
+
+  <section class="proj-section" id="results">
+    <div class="section-header"><h2 class="section-title">Results</h2></div>
+    <div class="project-body">
+      <ul class="key-results">
+        <li><strong>Complete flights captured:</strong> the logger runs for a whole mission and writes a CSV that the
+          reconstruction script reads directly.</li>
+        <li><strong>Robust to the game&rsquo;s state:</strong> pausing, menus and dropped requests skip samples instead
+          of crashing the logger or misaligning columns.</li>
+      </ul>
+      <p>Reviewing the code for this page found three issues. The AOA and AOS columns read the artificial horizon&rsquo;s
+        pitch and roll, so they duplicate those columns instead of recording angle of attack and sideslip. Every run
+        saves to the same file name, so the next flight overwrites the last. And the closing message names a different
+        file from the one actually written.</p>
+    </div>
+  </section>
+
+  <section class="proj-section" id="future-developments">
+    <div class="section-header"><h2 class="section-title">Future developments</h2></div>
+    <div class="project-body">
+      <ul class="key-results">
+        <li><strong>Log angle of attack and sideslip.</strong> Both are in /state. Necessary: they are
+          the most useful values for studying handling, and the current columns are copies.</li>
+        <li><strong>Timestamped file names.</strong> Currently produced CSV names are set before logging begins, so overwriting of files intened to be kept can easily accidentaly happen,
+          to avoid this a date and time needs to be added to avoid this overwriting.</li>
+      </ul>
+    </div>
+  </section>
+
+</main>
+
+<footer>
+  <span>Hamish Stuart</span>
+  <span>Engineering Portfolio</span>
+</footer>
+
+</body>
+</html>
