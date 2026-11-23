@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Astronomical Solar Tracker — Hamish Stuart</title>
+<link rel="stylesheet" href="styles.css"/>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.css"/>
+<script defer src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.js"></script>
+<script defer src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/contrib/auto-render.min.js"
+  onload="renderMathInElement(document.body, {delimiters: [{left: '\\[', right: '\\]', display: true}, {left: '\\(', right: '\\)', display: false}]});"></script>
+</head>
+<body>
+
+<header>
+  <a class="logo" href="index.html">Professional portfolio</a>
+</header>
+
+<div class="hero">
+  <a class="back-link" href="index.html">&larr; Back to portfolio</a>
+
+  <h1>ASTRONOMICAL SOLAR TRACKER</h1>
+
+  <p class="hero-sub">The purpose of this project is to compare its functionality against the classical simple solar project that uses LDRs to arbitrarily track the sun.  
+    The method in this project is dual axis astrological tracking of the sun, that uses the panels location, time, and date to calculate the suns position and interpret that position into servo motor angles to face a solar panel towards it.</p>
+
+  <div class="project-meta">
+    <span><strong>Status</strong>Prototype, simulated in Wokwi</span>
+    <span><strong>Tools</strong>ESP32, C++, Wokwi</span>
+  </div>
+
+  <a class="download-link" href="https://wokwi.com/projects/467694159858212865" download>Simulate the project on Wokwi</a>
+</div>
+
+<main class="content">
+
+  <section class="proj-section" id="introduction">
+    <div class="section-header"><h2 class="section-title">Project introduction</h2></div>
+    <div class="project-body">
+      <p>At boot the ESP32 joins Wi-Fi and sets its clock from an internet time server. Every 30 seconds it
+        calculates the sun&rsquo;s compass direction (azimuth) and height (elevation) for its location, turns those
+        into angles for an east&ndash;west servo and a tilt servo, and moves the panel. At night it parks the panel flat.</p>
+     </div>
+  </section>
+
+  <section class="proj-section" id="design-choices">
+    <div class="section-header"><h2 class="section-title">Major design choices</h2></div>
+    <div class="project-body">
+      <ul class="key-results">
+        <li><strong>Calculated sun position.</strong> Working out the sun&rsquo;s position from the clock keeps tracking
+          steady under cloud coverage. The cost is that the clock, location and mount alignment all have to be accurate, resulting in higher ammounts of computational requirement.</li>
+        <li><strong>Internet time.</strong> The ESP32 already has Wi-Fi, so time comes from an
+          NTP server with no extra hardware.</li>
+        <li><strong>One servo per angle.</strong> An azimuth-elevation mount turns each calculated angle straight
+          into one servo position, keeping control simple.</li>
+        <li><strong>Update every 30 seconds.</strong> The sun moves about 0.125&deg; in that time, less than a servo&rsquo;s
+          1&deg; step, so moving more often would only waste power.</li>
+        <li><strong>Park below 5&deg; elevation.</strong> Near sunrise and sunset the panel collects little energy, so it
+          lies flat instead of chasing a low sun.</li>
+      </ul>
+    </div>
+  </section>
+
+  <section class="proj-section" id="design">
+    <div class="section-header"><h2 class="section-title">Design</h2></div>
+    <div class="project-body">
+      <p>The sun&rsquo;s position comes from Meeus&rsquo; solar equations (<em>Astronomical Algorithms</em>), the same
+        method behind NOAA&rsquo;s solar calculator. From the time \(T\) in Julian centuries, they give the sun&rsquo;s
+        declination \(\delta\) and right ascension \(\alpha\). Then, for latitude \(\varphi\) and longitude \(L\):</p>
+
+      <div class="eq-block">
+        <div class="eq-row">
+          <div class="eq-name">Hour angle</div>
+          <div class="eq-math">\[ H = \text{GMST} + L - \alpha \]</div>
+        </div>
+        <div class="eq-row">
+          <div class="eq-name">Elevation</div>
+          <div class="eq-math">\[ \sin h = \sin\varphi\,\sin\delta + \cos\varphi\,\cos\delta\,\cos H \]</div>
+        </div>
+        <div class="eq-row">
+          <div class="eq-name">Azimuth</div>
+          <div class="eq-math">\[ \cos A = \frac{\sin\delta - \sin\varphi\,\sin h}{\cos\varphi\,\cos h}, \qquad A \to 360^\circ - A \ \text{ if } \sin H > 0 \]</div>
+        </div>
+        <div class="eq-row">
+          <div class="eq-name">Refraction</div>
+          <div class="eq-math">\[ R = \frac{1.02}{\tan\!\left(h + \frac{10.3}{h + 5.11}\right)} \ \text{arcmin} \]</div>
+        </div>
+        <div class="eq-row">
+          <div class="eq-name">Servo angles</div>
+          <div class="eq-math">\[ \theta_{EW} = 180\,\frac{A - 90}{270 - 90}, \qquad \theta_{NS} = 180\,\frac{h}{90}, \qquad \text{both clamped to } 0\text{&ndash;}180^\circ \]</div>
+        </div>
+      </div>
+
+      <div class="table-wrap">
+        <table class="data-table">
+          <thead><tr><th>Status</th><th>When</th><th>Servos</th></tr></thead>
+          <tbody>
+            <tr><td>TRACKING</td><td>Sun above 5&deg; and between 90&deg; and 270&deg; azimuth</td><td>Point at the sun</td></tr>
+            <tr><td>OUT_OF_RANGE</td><td>Sun above 5&deg; but outside the mount&rsquo;s sweep</td><td>Hold last position</td></tr>
+            <tr><td>PARKED</td><td>Sun below 5&deg;</td><td>Panel flat, facing south</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <ul>
+        <li><strong>Hardware:</strong> east&ndash;west servo on GPIO 18, tilt servo on GPIO 19, both driven with
+          500&ndash;2,400&nbsp;&micro;s pulses. Every limit and mapping is a setting at the top of the sketch.</li>
+        <li><strong>Logging:</strong> each update prints a CSV line (time, azimuth, elevation, both servo angles, status)
+          over serial for checking and plotting.</li>
+        <li><strong>Self-recovery:</strong> Wi-Fi is checked every 60&nbsp;s and reconnected, with a fresh time sync, if it drops.</li>
+      </ul>
+    </div>
+  </section>
+
+  <section class="proj-section" id="results">
+    <div class="section-header"><h2 class="section-title">Results</h2></div>
+    <div class="project-body">
+      <p>Simulations of this project on Wokwi prove promising, however real world testing is required to confirm efficiency of the design.</p>
+    </div>
+  </section>
+
+  <section class="proj-section" id="future-developments">
+    <div class="section-header"><h2 class="section-title">Future developments</h2></div>
+    <div class="project-body">
+      <ul class="key-results">
+        <li><strong>GPS for time and location.</strong> Removes the need for Wi-Fi and manual coordinates. Useful for a
+          portable tracker, not necessary for a fixed installation.</li>
+      </ul>
+      <p>This is the first and one of the key functional components of a small personal solar station, which is what this project is building towards.  Future developments will include farme design, MPPT functionality, and a small BESS system.</p>
+    </div>
+  </section>
+
+</main>
+
+<footer>
+  <span>Hamish Stuart</span>
+  <span>Engineering Portfolio</span>
+</footer>
+
+<script>
+// Same sun calculation and servo logic as the ESP32 sketch (double precision, refraction in arc-minutes).
+const SITES = {
+  site: { lat: 42.795150, lon: 25.825686, utc: 2,  name: 'UTC+2' },
+  bne:  { lat: -27.4698,  lon: 153.0251,  utc: 10, name: 'UTC+10' },
+};
+const EW_AZ_MIN = 90, EW_AZ_MAX = 270, NS_EL_MIN = 0, NS_EL_MAX = 90, FLOOR = 5;
+const D2R = Math.PI / 180, R2D = 180 / Math.PI;
+const mod = (a, n) => ((a % n) + n) % n;
+
+function sunPosition(utcMs, lat, lon) {
+  const JD = utcMs / 86400000 + 2440587.5;
+  const T = (JD - 2451545) / 36525;
+  const L0 = mod(280.46646 + 36000.76983 * T, 360);
+  const M = mod(357.52911 + 35999.05029 * T - 0.0001537 * T * T, 360) * D2R;
+  const C = (1.914602 - 0.004817 * T - 0.000014 * T * T) * Math.sin(M)
+          + (0.019993 - 0.000101 * T) * Math.sin(2 * M) + 0.000289 * Math.sin(3 * M);
+  const omega = 125.04 - 1934.136 * T;
+  const lambda = (L0 + C - 0.00569 - 0.00478 * Math.sin(omega * D2R)) * D2R;
+  const eps = (23.439291 - 0.013004 * T + 0.00256 * Math.cos(omega * D2R)) * D2R;
+  const RA = Math.atan2(Math.cos(eps) * Math.sin(lambda), Math.cos(lambda));
+  const decl = Math.asin(Math.sin(eps) * Math.sin(lambda));
+  const GMST = mod(280.46061837 + 360.98564736629 * (JD - 2451545) + 0.000387933 * T * T - T * T * T / 38710000, 360);
+  const H = mod(GMST + lon - RA * R2D, 360) * D2R, phi = lat * D2R;
+  const sinEl = Math.sin(phi) * Math.sin(decl) + Math.cos(phi) * Math.cos(decl) * Math.cos(H);
+  const el = Math.asin(sinEl);
+  let az = Math.acos(Math.max(-1, Math.min(1, (Math.sin(decl) - Math.sin(phi) * sinEl) / (Math.cos(phi) * Math.cos(el))))) * R2D;
+  if (Math.sin(H) > 0) az = 360 - az;
+  let elDeg = el * R2D;
+  if (elDeg > -0.575) elDeg += 1.02 / Math.tan((elDeg + 10.3 / (elDeg + 5.11)) * D2R) / 60;
+  return { az, el: elDeg };
+}
+const clamp180 = v => Math.trunc(Math.max(0, Math.min(180, v)));
+const azToServo = a => clamp180((a - EW_AZ_MIN) / (EW_AZ_MAX - EW_AZ_MIN) * 180);
+const elToServo = e => clamp180((e - NS_EL_MIN) / (NS_EL_MAX - NS_EL_MIN) * 180);
+
+// Run the tracker through the whole day, a minute at a time, so OUT_OF_RANGE holds the right last position.
+let day = [];
+function simulateDay() {
+  const site = SITES[$('loc').value];
+  const [y, m, d] = $('date').value.split('-').map(Number);
+  let ew = azToServo(180), ns = 0;          // starts the day parked
+  day = [];
+  for (let min = 0; min < 1440; min++) {
+    const s = sunPosition(Date.UTC(y, m - 1, d, 0, min - site.utc * 60), site.lat, site.lon);
+    let status;
+    if (s.el < FLOOR) { status = 'PARKED'; ew = azToServo(180); ns = 0; }
+    else if (s.az >= EW_AZ_MIN && s.az <= EW_AZ_MAX) { status = 'TRACKING'; ew = azToServo(s.az); ns = elToServo(s.el); }
+    else status = 'OUT_OF_RANGE';
+    day.push({ ...s, status, ew, ns });
+  }
+  drawSky();
+}
+
+// ── drawing helpers ─────────────────────────────────────────────────────────
+const $ = id => document.getElementById(id);
+const NS = 'http://www.w3.org/2000/svg';
+function el(parent, tag, attrs, text) {
+  const e = document.createElementNS(NS, tag);
+  for (const k in attrs) e.setAttribute(k, attrs[k]);
+  if (text !== undefined) e.textContent = text;
+  parent.appendChild(e); return e;
+}
+const css = getComputedStyle(document.documentElement);
+const tok = (n, f) => css.getPropertyValue(n).trim() || f;
+const COL = { track: tok('--solar-track', '#44c538'), out: tok('--solar-out', '#f5844c'), park: tok('--solar-park', '#555'),
+              sun: tok('--solar-sun', '#ffc83d'), grid: tok('--plot-grid', '#1c1c1c'), muted: tok('--muted', '#888'),
+              text: tok('--text', '#b6b6b6'), heading: tok('--heading', '#fff'), mono: tok('--mono', 'monospace') };
+
+// sky map, seen from above: north up, east right, horizon at the edge, zenith in the middle
+const CX = 160, CY = 160, RS = 132;
+const skyXY = (az, e) => { const r = RS * (90 - Math.max(e, 0)) / 90; return [CX + r * Math.sin(az * D2R), CY - r * Math.cos(az * D2R)]; };
+let sunDot;
+function drawSky() {
+  const svg = $('sky'); svg.textContent = '';
+  const a0 = EW_AZ_MIN * D2R, a1 = EW_AZ_MAX * D2R;
+  el(svg, 'path', { class: 'sky-range', d: `M${CX},${CY} L${CX + RS * Math.sin(a0)},${CY - RS * Math.cos(a0)} A${RS},${RS} 0 0 1 ${CX + RS * Math.sin(a1)},${CY - RS * Math.cos(a1)} Z` });
+  for (const e of [0, 30, 60]) el(svg, 'circle', { class: 'sky-ring', cx: CX, cy: CY, r: RS * (90 - e) / 90 });
+  el(svg, 'line', { class: 'sky-axis', x1: CX - RS, y1: CY, x2: CX + RS, y2: CY });
+  el(svg, 'line', { class: 'sky-axis', x1: CX, y1: CY - RS, x2: CX, y2: CY + RS });
+  for (const [t, x, y] of [['N', CX, CY - RS - 8], ['S', CX, CY + RS + 16], ['E', CX + RS + 10, CY + 4], ['W', CX - RS - 10, CY + 4]])
+    el(svg, 'text', { class: 'sky-label', x, y, 'text-anchor': 'middle' }, t);
+  el(svg, 'text', { class: 'sky-label', x: CX + 4, y: CY - RS * 2 / 3 + 12 }, '30°');
+  el(svg, 'text', { class: 'sky-label', x: CX + 4, y: CY - RS / 3 + 12 }, '60°');
+
+  // sun path above the 5° floor, split into tracking / out-of-range runs
+  let run = null, runs = [];
+  day.forEach((p, i) => {
+    const kind = p.status === 'PARKED' ? null : p.status;
+    if (kind !== (run && run.kind)) { run = kind ? { kind, pts: [] } : null; if (run) runs.push(run); }
+    if (run) run.pts.push(skyXY(p.az, p.el));
+  });
+  for (const r of runs) el(svg, 'path', { class: r.kind === 'TRACKING' ? 'sky-path-track' : 'sky-path-out',
+                                          d: 'M' + r.pts.map(p => p.map(v => v.toFixed(1)).join(',')).join('L') });
+  sunDot = el(svg, 'circle', { class: 'sky-sun', r: 8, cx: CX, cy: CY });
+}
+
+function dial(svg, label, value) {
+  svg.textContent = '';
+  const cx = 80, cy = 78, r = 60;
+  el(svg, 'path', { class: 'dial-arc', d: `M${cx - r},${cy} A${r},${r} 0 0 1 ${cx + r},${cy}` });
+  for (const t of [0, 45, 90, 135, 180]) {
+    const a = Math.PI - t * D2R;
+    el(svg, 'line', { class: 'dial-tick', x1: cx + (r - 12) * Math.cos(a), y1: cy - (r - 12) * Math.sin(a), x2: cx + (r + 5) * Math.cos(a), y2: cy - (r + 5) * Math.sin(a) });
+  }
+  const a = Math.PI - value * D2R;
+  el(svg, 'line', { class: 'dial-needle', x1: cx, y1: cy, x2: cx + (r - 16) * Math.cos(a), y2: cy - (r - 16) * Math.sin(a) });
+  el(svg, 'circle', { class: 'dial-hub', cx, cy, r: 4 });
+  el(svg, 'text', { class: 'dial-value', x: cx, y: cy + 24, 'text-anchor': 'middle' }, `${value}°`);
+  el(svg, 'text', { class: 'dial-label', x: cx, y: 10, 'text-anchor': 'middle' }, label);
+}
+
+const NOTES = { TRACKING: 'Panel follows the sun.', OUT_OF_RANGE: 'Sun is outside the mount’s sweep, holding position.', PARKED: 'Sun below 5°, panel lies flat.' };
+const fmt = min => `${String(Math.floor(min / 60)).padStart(2, '0')}:${String(min % 60).padStart(2, '0')}`;
+
+const chart = $('chart'), cc = chart.getContext('2d');
+const CH = { L: 40, R: 12, T: 10, B: 24, lo: -30, hi: 90 };
+function drawChart(cur) {
+  const dpr = Math.min(devicePixelRatio, 2), W = chart.clientWidth, H = chart.clientHeight;
+  if (chart.width !== Math.round(W * dpr)) { chart.width = Math.round(W * dpr); chart.height = Math.round(H * dpr); }
+  cc.setTransform(dpr, 0, 0, dpr, 0, 0); cc.clearRect(0, 0, W, H);
+  const X = m => CH.L + (W - CH.L - CH.R) * m / 1440, Y = v => CH.T + (H - CH.T - CH.B) * (CH.hi - v) / (CH.hi - CH.lo);
+  // status bands
+  for (let i = 0; i < 1440;) {           // one rectangle per run of the same status
+    const st = day[i].status; let j = i;
+    while (j < 1440 && day[j].status === st) j++;
+    if (st !== 'PARKED') {
+      cc.fillStyle = st === 'TRACKING' ? COL.track : COL.out; cc.globalAlpha = st === 'TRACKING' ? 0.22 : 0.3;
+      cc.fillRect(X(i), CH.T, X(j) - X(i), H - CH.T - CH.B);
+    }
+    i = j;
+  }
+  cc.globalAlpha = 1;
+  // grid + labels
+  cc.strokeStyle = COL.grid; cc.lineWidth = 1; cc.fillStyle = COL.muted; cc.font = `10px ${COL.mono}`;
+  cc.textAlign = 'right'; cc.textBaseline = 'middle';
+  for (const v of [-30, 0, 30, 60, 90]) {
+    cc.beginPath(); cc.moveTo(CH.L, Y(v) + .5); cc.lineTo(W - CH.R, Y(v) + .5); cc.stroke();
+    cc.fillText(`${v}°`, CH.L - 6, Y(v));
+  }
+  cc.strokeStyle = COL.muted; cc.setLineDash([3, 3]); cc.beginPath(); cc.moveTo(CH.L, Y(FLOOR) + .5); cc.lineTo(W - CH.R, Y(FLOOR) + .5); cc.stroke(); cc.setLineDash([]);
+  cc.textAlign = 'center'; cc.textBaseline = 'alphabetic';
+  for (let h = 0; h <= 24; h += W < 500 ? 6 : 3) {
+    cc.textAlign = h === 0 ? 'left' : h === 24 ? 'right' : 'center';
+    cc.fillText(`${String(h).padStart(2, '0')}:00`, X(h * 60), H - 6);
+  }
+  // elevation line
+  cc.strokeStyle = COL.heading; cc.lineWidth = 2; cc.lineJoin = 'round'; cc.beginPath();
+  day.forEach((p, i) => { const y = Y(Math.max(CH.lo, p.el)); i ? cc.lineTo(X(i), y) : cc.moveTo(X(i), y); });
+  cc.stroke();
+  // current time
+  cc.strokeStyle = COL.sun; cc.lineWidth = 1.5; cc.beginPath(); cc.moveTo(X(cur) + .5, CH.T); cc.lineTo(X(cur) + .5, H - CH.B); cc.stroke();
+  cc.fillStyle = COL.sun; cc.beginPath(); cc.arc(X(cur), Y(Math.max(CH.lo, day[cur].el)), 5, 0, Math.PI * 2); cc.fill();
+}
+
+function render() {
+  const cur = +$('time').value, p = day[cur], site = SITES[$('loc').value];
+  $('time-label').textContent = `${fmt(cur)} (${site.name})`;
+  const st = $('status'); st.textContent = p.status; st.className = 'status-badge ' + p.status;
+  $('status-note').textContent = NOTES[p.status];
+  dial($('dial-ew'), 'EAST–WEST SERVO', p.ew);
+  dial($('dial-ns'), 'TILT SERVO', p.ns);
+  $('r-az').textContent = `${p.az.toFixed(1)}°`;
+  $('r-el').textContent = `${p.el.toFixed(1)}°`;
+  const [x, y] = skyXY(p.az, p.el);
+  sunDot.setAttribute('cx', x.toFixed(1)); sunDot.setAttribute('cy', y.toFixed(1));
+  sunDot.style.opacity = p.el > 0 ? 1 : 0;
+  drawChart(cur);
+}
+
+// ── controls ─────────────────────────────────────────────────────────────────
+let playing = false, last = 0, acc = 0;
+const playBtn = $('play');
+function setPlaying(v) { playing = v; playBtn.textContent = v ? 'Pause' : 'Play'; }
+playBtn.addEventListener('click', () => setPlaying(!playing));
+$('time').addEventListener('input', () => { setPlaying(false); render(); });
+for (const id of ['loc', 'date']) $(id).addEventListener('change', () => { if ($('date').value) { simulateDay(); render(); } });
+function scrub(e) {
+  const r = chart.getBoundingClientRect();
+  const m = Math.round((e.clientX - r.left - CH.L) / (r.width - CH.L - CH.R) * 1440);
+  $('time').value = Math.max(0, Math.min(1439, m)); setPlaying(false); render();
+}
+chart.addEventListener('pointerdown', e => { scrub(e); chart.setPointerCapture(e.pointerId); });
+chart.addEventListener('pointermove', e => { if (e.buttons) scrub(e); });
+new ResizeObserver(() => drawChart(+$('time').value)).observe(chart);
+
+function tick(now) {
+  if (playing) {
+    acc += Math.min(now - last, 100) * 0.06;            // about 1 hour of sun per second
+    const step = Math.floor(acc); acc -= step;
+    if (step) { $('time').value = (+$('time').value + step) % 1440; render(); }
+  }
+  last = now; requestAnimationFrame(tick);
+}
+
+simulateDay(); render();
+setPlaying(!matchMedia('(prefers-reduced-motion: reduce)').matches);
+requestAnimationFrame(t => { last = t; tick(t); });
+</script>
+
+</body>
+</html>
