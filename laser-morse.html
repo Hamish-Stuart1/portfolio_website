@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Laser Morse Communicator — Hamish Stuart</title>
+<link rel="stylesheet" href="styles.css"/>
+</head>
+<body>
+
+<header>
+  <a class="logo" href="index.html">Professional portfolio</a>
+</header>
+
+<div class="hero">
+  <a class="back-link" href="index.html">&larr; Back to portfolio</a>
+
+  <h1>LASER MORSE COMMUNICATOR</h1>
+
+  <p class="hero-sub">This project idea came to me after seeing a video online about an inteligence srategy from the 70s in which services would identify a
+    meeting place a sensitive conversation was to take place, and listening in on this conversation by pointing a laser at the window and capturing the reflection of this laser.
+    this meant that the sound waves casuing miniscule vibrations in the window modulates the laser reflection, and the recived laser could be reconstructed and interpreted into sound.
+    This strategy made me realise that the same strategy could be used as a very difficult to intercept communication method.  further research proved that having the laser so close to a vibrating 
+    surface causes very difficult to intepret vibrations, so instead i opted to use the laser as a binary bit.  This method is interesting as interception relise on being in the direct LOS of the sender and reciever.
+    Conversely, this is a primiative communication method BECAUSE you need LOS between sender and reciever.
+  My design of this project uses cheap electronics to prove the theory of this method, and I aim to improve the functionality once this is proven.</p>
+
+  <div class="project-meta">
+    <span><strong>Status</strong>Completed</span>
+    <span><strong>Type</strong>Personal project</span>
+    <span><strong>Tools</strong>Arduino, C++, Adafruit SSD1306 library</span>
+  </div>
+</div>
+
+<main class="content">
+
+  <section class="proj-section" id="introduction">
+    <div class="section-header"><h2 class="section-title">Project introduction</h2></div>
+    <div class="project-body">
+      <p>The transmitter includes a OLED screen keyboard, 2 buttons and a dial as a tiny message typing and sending system, to be transmitted via a small laser module. Turning a dial moves the highlight,
+        one button adds the highlighted character to the message, and the other sends it. While sending, the laser
+        flashes each character in Morse code and the screen highlights the character on air.  While morse is an outdated encryption method, this project can be easily updated to use any binary encryption to send and recieve, provided the send and recieve modules are updated with the same code.</p>
+        <img class="img-center" src="laser comm.jpg" width="400" alt="Top side of the 28 x 20 mm lighting controller PCB">
+      <p>The receiver watches a LDR for the laser, and takes an ambient lighting threshold to avoid noise. It times each flash and each gap, turns them into dots,
+        dashes and letter breaks, and shows both the raw Morse and the decoded message on its own screen, with the option for a buzzer
+        sounding every pulse.</p>
+    </div>
+  </section>
+
+  <section class="proj-section" id="design-choices">
+    <div class="section-header"><h2 class="section-title">Major design choices</h2></div>
+    <div class="project-body">
+      <ul class="key-results">
+        <li><strong>Morse code.</strong> A dash is three times as long as a dot, so
+          symbols stay easy to tell apart even with a slow light sensor and loose timing, and the two ends need no
+          shared clock. A person can also read it by ear. This encryption method does sacrifice speed, however future versions will look to improve this.</li>
+        <li><strong>A dial and two buttons to type.</strong> Three inputs cover every letter and number plus delete, keeping the
+          transmitter small and simple to wire, at the cost of slower typing than a keypad.</li>
+        <li><strong>Self-calibrating receiver.</strong> At power-up it reads the room&rsquo;s light level and sets its
+          detection threshold just above it, so it needs no manual tuning.</li>
+      </ul>
+    </div>
+  </section>
+
+  <section class="proj-section" id="design">
+    <div class="section-header"><h2 class="section-title">Design</h2></div>
+    <div class="project-body">
+      <p>Timing follows the standard Morse ratios, built from one 150&nbsp;ms unit. Below is &ldquo;SOS&rdquo; as the
+        laser sends it.</p>
+
+      <div class="diagram-wrap">
+        <svg class="diagram" viewBox="0 0 900 190" role="img"
+             aria-label="Laser on-off timing for SOS: three 150 ms dots, a 450 ms letter gap, three 450 ms dashes, a letter gap, then three dots. Dots and dashes are separated by 150 ms gaps.">
+          <defs>
+            <marker id="dg-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+              <path class="dg-head" d="M0,0 L10,5 L0,10 Z"/>
+            </marker>
+          </defs>
+          <text class="dg-label" x="20" y="62">ON</text>
+          <text class="dg-label" x="20" y="112">OFF</text>
+          <path class="dg-rule" d="M60,108 H880"/>
+          <!-- SOS at 30 px per 150 ms unit, starting x = 60:
+               S: on1 off1 on1 off1 on1 | off3 | O: on3 off1 on3 off1 on3 | off3 | S: on1 off1 on1 off1 on1 -->
+          <path class="dg-line" d="M60,108 V58 H90 V108 H120 V58 H150 V108 H180 V58 H210 V108
+                                   H300 V58 H390 V108 H420 V58 H510 V108 H540 V58 H630 V108
+                                   H720 V58 H750 V108 H780 V58 H810 V108 H840 V58 H870 V108"/>
+          <text class="dg-title" x="135" y="36" text-anchor="middle">S</text>
+          <text class="dg-title" x="465" y="36" text-anchor="middle">O</text>
+          <text class="dg-title" x="795" y="36" text-anchor="middle">S</text>
+
+          <path class="dg-line" d="M60,134 H90" marker-start="url(#dg-arrow)" marker-end="url(#dg-arrow)"/>
+          <text class="dg-label" x="75" y="152" text-anchor="middle">dot</text>
+          <text class="dg-label" x="75" y="168" text-anchor="middle">150 ms</text>
+          <path class="dg-line" d="M90,134 H120" marker-start="url(#dg-arrow)" marker-end="url(#dg-arrow)"/>
+          <text class="dg-label" x="112" y="182" text-anchor="middle">gap 150 ms</text>
+          <path class="dg-line" d="M210,134 H300" marker-start="url(#dg-arrow)" marker-end="url(#dg-arrow)"/>
+          <text class="dg-label" x="255" y="152" text-anchor="middle">letter gap</text>
+          <text class="dg-label" x="255" y="168" text-anchor="middle">450 ms</text>
+          <path class="dg-line" d="M300,134 H390" marker-start="url(#dg-arrow)" marker-end="url(#dg-arrow)"/>
+          <text class="dg-label" x="345" y="152" text-anchor="middle">dash</text>
+          <text class="dg-label" x="345" y="168" text-anchor="middle">450 ms</text>
+        </svg>
+      </div>
+
+      <div class="table-wrap">
+        <table class="data-table">
+          <thead><tr><th>Part</th><th>Pin</th><th>Role</th></tr></thead>
+          <tbody>
+            <tr><td>Transmitter: laser module</td><td>D2</td><td>Switched on and off for each dot and dash</td></tr>
+            <tr><td>Transmitter: dial (potentiometer)</td><td>A2</td><td>Picks the highlighted character</td></tr>
+            <tr><td>Transmitter: Enter / Send buttons</td><td>D3 / D4</td><td>Add the character / send the message</td></tr>
+            <tr><td>Receiver: light sensor</td><td>A3</td><td>Detects the laser above the ambient threshold</td></tr>
+            <tr><td>Receiver: buzzer</td><td>D2</td><td>1 kHz tone while the laser is on</td></tr>
+            <tr><td>Both: 128 &times; 32 OLED</td><td>I2C</td><td>Character picker / raw Morse and decoded message</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <ul>
+        <li><strong>Decoding by duration:</strong> the receiver timestamps every change between light and dark with
+          <code>millis()</code>. A flash shorter than two dot-lengths is a dot, anything longer is a dash, and a long
+          enough dark gap ends the letter, which is then looked up in a Morse table (unknown patterns show as &ldquo;?&rdquo;).</li>
+        <li><strong>Live feedback while sending:</strong> the transmitter highlights the character currently on air, so
+          the sender can follow along.</li>
+        <li><strong>Editing:</strong> the last position on the dial is a delete key, so mistakes can be fixed before sending.</li>
+      </ul>
+    </div>
+  </section>
+
+  <section class="proj-section" id="results">
+    <div class="section-header"><h2 class="section-title">Results</h2></div>
+    <div class="project-body">
+      <ul class="key-results">
+        <li><strong>8 words per minute,</strong> by the standard &ldquo;PARIS&rdquo; measure: &ldquo;HELLO&rdquo; takes 7.8&nbsp;s to send.</li>
+        <li><strong>Comfortable margins on most decisions:</strong> dashes are 250&nbsp;ms longer than the dot/dash
+          threshold, and gaps sit 150&nbsp;ms either side of the letter-break threshold.</li>
+        <li><strong>One tight margin:</strong> the receiver is set for 100&nbsp;ms dots while the transmitter sends
+          150&nbsp;ms, so a dot is only 50&nbsp;ms under the dot/dash threshold. A slow sensor stretching each flash is
+          the most likely way for a dot to be misread as a dash.</li>
+      </ul>
+    </div>
+  </section>
+
+  <section class="proj-section" id="future-developments">
+    <div class="section-header"><h2 class="section-title">Future developments</h2></div>
+    <div class="project-body">
+      <ul class="key-results">
+        <li><strong>Adaptive threshold.</strong> Keep updating the ambient light level while the laser is off, instead of
+          only at power-up.</li>
+        <li><strong>Two-way link with acknowledgement.</strong> Would confirm delivery and allow resending. Not necessary
+          for a demonstration, and it doubles the hardware.</li>
+        <li><strong>Encryption methods.</strong> Further research is required to find and implement a method that sends messages quicker, or in a harder to decode method.</li>
+        <li><strong>send and recieve</strong> The primary planned future development is allowing modules to operate in both send and recieve mode, this will increase hardware requirements and hence size, 
+        meaning the goal of hiding this device in an unsuspicious location or container will be difficult.</li>
+      </ul>
+    </div>
+  </section>
+
+</main>
+
+<footer>
+  <span>Hamish Stuart</span>
+  <span>Engineering Portfolio</span>
+</footer>
+
+</body>
+</html>
